@@ -1253,6 +1253,8 @@
     "提示：该功能为测试版，未来配置结构与功能行为可能发生变更，请勿在生产环境使用。": "Notice: This feature is beta. The configuration structure and behavior may change in the future. Do not use in production.",
     "提示：语言偏好会同步到您登录的所有设备，并影响API返回的错误消息语言。": "Note: Language preference syncs across all your logged-in devices and affects the language of API error messages.",
     "提示：链接中的{key}将被替换为API密钥，{address}将被替换为服务器地址": "Tip: {key} in the link will be replaced with the API key, {address} will be replaced with the server address",
+    "缓存创建倍率": "Cache creation ratio",
+    "默认为 5m 缓存创建倍率；1h 缓存创建倍率按固定乘法自动计算（当前为 1.6x）": "Defaults to the 5m cache creation ratio; the 1h cache creation ratio is computed by fixed multiplication (currently 1.6x)",
     "搜索供应商": "Search vendor",
     "搜索关键字": "Search keywords",
     "搜索失败": "Search failed",
