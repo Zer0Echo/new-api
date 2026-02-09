@@ -494,14 +494,14 @@ const LoginForm = () => {
         <div className='w-full max-w-md'>
           <div className='flex items-center justify-center mb-6 gap-2'>
             <img src={logo} alt='Logo' className='h-10 rounded-full' />
-            <Title heading={3} className='!text-gray-800'>
+            <Title heading={3} className='!text-semi-color-text-0'>
               {systemName}
             </Title>
           </div>
 
           <Card className='border-0 !rounded-2xl overflow-hidden'>
             <div className='flex justify-center pt-6 pb-2'>
-              <Title heading={3} className='text-gray-800 dark:text-gray-200'>
+              <Title heading={3} className='text-semi-color-text-0'>
                 {t('登 录')}
               </Title>
             </div>
@@ -637,7 +637,7 @@ const LoginForm = () => {
                 <Button
                   theme='solid'
                   type='primary'
-                  className='w-full h-12 flex items-center justify-center bg-black text-white !rounded-full hover:bg-gray-800 transition-colors'
+                  className='w-full h-12 flex items-center justify-center !bg-[var(--theme-cta-bg)] text-white !rounded-full hover:!bg-[var(--theme-cta-hover)] transition-colors'
                   icon={<IconMail size='large' />}
                   onClick={handleEmailLoginClick}
                   loading={emailLoginLoading}
@@ -652,7 +652,7 @@ const LoginForm = () => {
                     checked={agreedToTerms}
                     onChange={(e) => setAgreedToTerms(e.target.checked)}
                   >
-                    <Text size='small' className='text-gray-600'>
+                    <Text size='small' className='text-semi-color-text-2'>
                       {t('我已阅读并同意')}
                       {hasUserAgreement && (
                         <>
@@ -660,7 +660,7 @@ const LoginForm = () => {
                             href='/user-agreement'
                             target='_blank'
                             rel='noopener noreferrer'
-                            className='text-blue-600 hover:text-blue-800 mx-1'
+                            className='text-semi-color-primary hover:text-[var(--theme-accent-hover)] mx-1'
                           >
                             {t('用户协议')}
                           </a>
@@ -673,7 +673,7 @@ const LoginForm = () => {
                             href='/privacy-policy'
                             target='_blank'
                             rel='noopener noreferrer'
-                            className='text-blue-600 hover:text-blue-800 mx-1'
+                            className='text-semi-color-primary hover:text-[var(--theme-accent-hover)] mx-1'
                           >
                             {t('隐私政策')}
                           </a>
@@ -690,7 +690,7 @@ const LoginForm = () => {
                     {t('没有账户？')}{' '}
                     <Link
                       to='/register'
-                      className='text-blue-600 hover:text-blue-800 font-medium'
+                      className='text-semi-color-primary hover:text-[var(--theme-accent-hover)] font-medium'
                     >
                       {t('注册')}
                     </Link>
@@ -715,7 +715,7 @@ const LoginForm = () => {
 
           <Card className='border-0 !rounded-2xl overflow-hidden'>
             <div className='flex justify-center pt-6 pb-2'>
-              <Title heading={3} className='text-gray-800 dark:text-gray-200'>
+              <Title heading={3} className='text-semi-color-text-0'>
                 {t('登 录')}
               </Title>
             </div>
@@ -758,7 +758,7 @@ const LoginForm = () => {
                       checked={agreedToTerms}
                       onChange={(e) => setAgreedToTerms(e.target.checked)}
                     >
-                      <Text size='small' className='text-gray-600'>
+                      <Text size='small' className='text-semi-color-text-2'>
                         {t('我已阅读并同意')}
                         {hasUserAgreement && (
                           <>
@@ -766,7 +766,7 @@ const LoginForm = () => {
                               href='/user-agreement'
                               target='_blank'
                               rel='noopener noreferrer'
-                              className='text-blue-600 hover:text-blue-800 mx-1'
+                              className='text-semi-color-primary hover:text-[var(--theme-accent-hover)] mx-1'
                             >
                               {t('用户协议')}
                             </a>
@@ -779,7 +779,7 @@ const LoginForm = () => {
                               href='/privacy-policy'
                               target='_blank'
                               rel='noopener noreferrer'
-                              className='text-blue-600 hover:text-blue-800 mx-1'
+                              className='text-semi-color-primary hover:text-[var(--theme-accent-hover)] mx-1'
                             >
                               {t('隐私政策')}
                             </a>
@@ -848,7 +848,7 @@ const LoginForm = () => {
                     {t('没有账户？')}{' '}
                     <Link
                       to='/register'
-                      className='text-blue-600 hover:text-blue-800 font-medium'
+                      className='text-semi-color-primary hover:text-[var(--theme-accent-hover)] font-medium'
                     >
                       {t('注册')}
                     </Link>
@@ -940,7 +940,7 @@ const LoginForm = () => {
   };
 
   return (
-    <div className='relative overflow-hidden bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8'>
+    <div className='relative overflow-hidden flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8'>
       {/* 背景模糊晕染球 */}
       <div
         className='blur-ball blur-ball-indigo'

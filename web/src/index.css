@@ -20,13 +20,162 @@
   --sidebar-current-width: var(--sidebar-width);
 }
 
+/* ==================== Claude AI Theme: Light Mode ==================== */
+:root {
+  /* --- Semi 基础调色板覆盖 (RGB 三元组) --- */
+  --semi-blue-0: 245,230,223;
+  --semi-blue-1: 240,217,207;
+  --semi-blue-2: 232,201,188;
+  --semi-blue-3: 224,174,154;
+  --semi-blue-4: 218,140,110;
+  --semi-blue-5: 218,119,86;
+  --semi-blue-6: 196,100,63;
+  --semi-blue-7: 189,93,58;
+  --semi-blue-8: 160,75,42;
+  --semi-blue-9: 130,58,30;
+  --semi-light-blue-5: 218,150,120;
+  --semi-grey-9: 61,57,41;
+  --semi-grey-8: 61,57,41;
+  --semi-grey-5: 140,134,112;
+  --semi-grey-0: 61,57,41;
+  --semi-white: 250,249,245;
+  --semi-black: 30,28,24;
+
+  /* --- 语义颜色覆盖 --- */
+  --semi-color-primary: #DA7756;
+  --semi-color-primary-hover: #C4643F;
+  --semi-color-primary-active: #BD5D3A;
+  --semi-color-primary-disabled: rgba(218,119,86, 0.5);
+  --semi-color-primary-light-default: #F5E6DF;
+  --semi-color-primary-light-hover: #F0D9CF;
+  --semi-color-primary-light-active: #E8C9BC;
+  --semi-color-bg-0: #EEECE2;
+  --semi-color-bg-1: #F5F3EB;
+  --semi-color-bg-2: #FAF9F5;
+  --semi-color-bg-3: #FFFFFF;
+  --semi-color-bg-4: #FFFFFF;
+  --semi-color-text-0: #3D3929;
+  --semi-color-text-1: rgba(61,57,41, 0.80);
+  --semi-color-text-2: rgba(61,57,41, 0.62);
+  --semi-color-text-3: rgba(61,57,41, 0.35);
+  --semi-color-fill-0: rgba(61,57,41, 0.05);
+  --semi-color-fill-1: rgba(61,57,41, 0.09);
+  --semi-color-fill-2: rgba(61,57,41, 0.13);
+  --semi-color-border: rgba(61,57,41, 0.12);
+  --semi-color-shadow: rgba(61,57,41, 0.08);
+  --semi-color-nav-bg: #F5F3EB;
+  --semi-color-link: #DA7756;
+  --semi-color-link-hover: #C4643F;
+  --semi-color-link-active: #BD5D3A;
+  --semi-color-link-visited: #BD5D3A;
+  --semi-color-focus-border: #DA7756;
+  --semi-color-white: #FAF9F5;
+  --semi-color-black: #1E1C18;
+  --semi-color-overlay-bg: rgba(61,57,41, 0.6);
+  --semi-color-disabled-text: rgba(61,57,41, 0.35);
+  --semi-color-disabled-border: rgba(61,57,41, 0.08);
+  --semi-color-disabled-bg: rgba(61,57,41, 0.04);
+  --semi-color-disabled-fill: rgba(61,57,41, 0.04);
+  --semi-color-highlight-bg: rgba(218,119,86, 0.15);
+  --semi-color-highlight: #DA7756;
+
+  /* --- 组件级主题变量 --- */
+  --theme-header-bg: rgba(245,243,235, 0.8);
+  --theme-header-border: rgba(61,57,41, 0.08);
+  --theme-cta-bg: #BD5D3A;
+  --theme-cta-hover: #A04B2A;
+  --theme-accent-hover: #BD5D3A;
+  --theme-btn-secondary-bg: #8B7355;
+  --theme-btn-secondary-hover: #7A6348;
+  --theme-dropdown-bg: var(--semi-color-bg-2);
+  --theme-dropdown-border: var(--semi-color-border);
+  --theme-dropdown-hover: var(--semi-color-fill-1);
+  --theme-card-bg-1: #F5E6DF;
+  --theme-card-bg-2: #F0F2E6;
+  --theme-card-bg-3: #FDF5E6;
+  --theme-card-bg-4: #F0E8E4;
+  --theme-trend-1: #DA7756;
+  --theme-trend-2: #8B7355;
+  --theme-decorative: #DA7756;
+}
+
+/* ==================== Claude AI Theme: Dark Mode ==================== */
+body[theme-mode="dark"] {
+  --semi-blue-0: 56,38,30;
+  --semi-blue-5: 224,139,109;
+  --semi-blue-6: 232,155,128;
+  --semi-blue-7: 212,123,91;
+  --semi-grey-9: 232,228,217;
+  --semi-grey-8: 232,228,217;
+  --semi-grey-5: 156,152,140;
+  --semi-grey-0: 232,228,217;
+  --semi-white: 232,228,217;
+  --semi-black: 30,28,24;
+
+  --semi-color-primary: #E08B6D;
+  --semi-color-primary-hover: #E89B80;
+  --semi-color-primary-active: #D47B5B;
+  --semi-color-primary-disabled: rgba(224,139,109, 0.5);
+  --semi-color-primary-light-default: rgba(224,139,109, 0.20);
+  --semi-color-primary-light-hover: rgba(224,139,109, 0.30);
+  --semi-color-primary-light-active: rgba(224,139,109, 0.40);
+  --semi-color-bg-0: #1E1C18;
+  --semi-color-bg-1: #2A2822;
+  --semi-color-bg-2: #36342C;
+  --semi-color-bg-3: #434038;
+  --semi-color-bg-4: #504D44;
+  --semi-color-text-0: #E8E4D9;
+  --semi-color-text-1: rgba(232,228,217, 0.80);
+  --semi-color-text-2: rgba(232,228,217, 0.60);
+  --semi-color-text-3: rgba(232,228,217, 0.35);
+  --semi-color-fill-0: rgba(232,228,217, 0.10);
+  --semi-color-fill-1: rgba(232,228,217, 0.14);
+  --semi-color-fill-2: rgba(232,228,217, 0.18);
+  --semi-color-border: rgba(232,228,217, 0.10);
+  --semi-color-shadow: rgba(0,0,0, 0.25);
+  --semi-color-nav-bg: #2A2822;
+  --semi-color-link: #E08B6D;
+  --semi-color-link-hover: #E89B80;
+  --semi-color-link-active: #D47B5B;
+  --semi-color-link-visited: #D47B5B;
+  --semi-color-focus-border: #E08B6D;
+  --semi-color-white: #E8E4D9;
+  --semi-color-black: #1E1C18;
+  --semi-color-overlay-bg: rgba(0,0,0, 0.65);
+  --semi-color-disabled-text: rgba(232,228,217, 0.35);
+  --semi-color-disabled-border: rgba(232,228,217, 0.08);
+  --semi-color-disabled-bg: rgba(232,228,217, 0.06);
+  --semi-color-disabled-fill: rgba(232,228,217, 0.06);
+  --semi-color-highlight-bg: rgba(224,139,109, 0.2);
+  --semi-color-highlight: #E08B6D;
+
+  /* --- 组件级主题变量 --- */
+  --theme-header-bg: rgba(42,40,34, 0.8);
+  --theme-header-border: rgba(232,228,217, 0.06);
+  --theme-cta-bg: #D47B5B;
+  --theme-cta-hover: #C06A4A;
+  --theme-accent-hover: #D47B5B;
+  --theme-btn-secondary-bg: #7A6A50;
+  --theme-btn-secondary-hover: #6A5A42;
+  --theme-dropdown-bg: #36342C;
+  --theme-dropdown-border: rgba(232,228,217, 0.10);
+  --theme-dropdown-hover: rgba(224,139,109, 0.25);
+  --theme-card-bg-1: rgba(224,139,109, 0.15);
+  --theme-card-bg-2: rgba(107,143,60, 0.15);
+  --theme-card-bg-3: rgba(232,165,77, 0.15);
+  --theme-card-bg-4: rgba(139,115,85, 0.15);
+  --theme-trend-1: #E08B6D;
+  --theme-trend-2: #A89070;
+  --theme-decorative: #E08B6D;
+}
+
 body.sidebar-collapsed {
   --sidebar-current-width: var(--sidebar-width-collapsed);
 }
 
 body {
-  font-family: Lato, 'Helvetica Neue', Arial, Helvetica, 'Microsoft YaHei',
-    sans-serif;
+  font-family: ui-serif, Georgia, Cambria, 'Times New Roman', Times,
+    'Songti SC', 'Noto Serif CJK SC', 'Source Han Serif SC', serif;
   color: var(--semi-color-text-0);
   background-color: var(--semi-color-bg-0);
 }
@@ -605,7 +754,7 @@ code {
     90deg,
     currentColor 0%,
     currentColor 40%,
-    #facc15 50%,
+    #E8B86D 50%,
     currentColor 60%,
     currentColor 100%
   );
@@ -652,8 +801,8 @@ code {
 }
 
 .blur-ball-indigo {
-  background: #6366f1;
-  /* indigo-500 */
+  background: #DA7756;
+  /* terracotta */
   top: 40px;
   left: 50%;
   transform: translateX(-50%);
@@ -661,8 +810,8 @@ code {
 }
 
 .blur-ball-teal {
-  background: #14b8a6;
-  /* teal-400 */
+  background: #E8B86D;
+  /* warm amber */
   top: 200px;
   left: 30%;
   opacity: 0.4;
@@ -670,11 +819,11 @@ code {
 
 /* 浅色主题下让模糊球更柔和 */
 html:not(.dark) .blur-ball-indigo {
-  opacity: 0.25;
+  opacity: 0.20;
 }
 
 html:not(.dark) .blur-ball-teal {
-  opacity: 0.2;
+  opacity: 0.18;
 }
 
 /* ==================== 卡片马卡龙模糊球（类封装） ==================== */
@@ -683,14 +832,14 @@ html:not(.dark) .blur-ball-teal {
   position: relative;
   overflow: hidden;
   /* 默认变量（明亮模式） */
-  --pb1: #ffd1dc;
-  /* 粉 */
-  --pb2: #e5d4ff;
-  /* 薰衣草 */
-  --pb3: #d1fff6;
-  /* 薄荷 */
-  --pb4: #ffe5d9;
-  /* 桃 */
+  --pb1: #F5D5C8;
+  /* 柔陶土 */
+  --pb2: #F0E6D0;
+  /* 暖奶油 */
+  --pb3: #E8D5B8;
+  /* 沙金 */
+  --pb4: #F2DDD3;
+  /* 蜜桃 */
   --pb-opacity: 0.55;
   --pb-blur: 60px;
 }
@@ -716,15 +865,15 @@ html:not(.dark) .blur-ball-teal {
 
 /* 暗黑模式下更柔和的色彩和透明度 */
 html.dark .with-pastel-balls {
-  /* 使用与明亮模式一致的“刚才那组”马卡龙色，但整体更柔和 */
-  --pb1: #ffd1dc;
-  /* 粉 */
-  --pb2: #e5d4ff;
-  /* 薰衣草 */
-  --pb3: #d1fff6;
-  /* 薄荷 */
-  --pb4: #ffe5d9;
-  /* 桃 */
+  /* 暗色模式下使用柔和暖色 */
+  --pb1: #C4856A;
+  /* 柔陶土 */
+  --pb2: #B8A882;
+  /* 暖卡其 */
+  --pb3: #A89070;
+  /* 沙棕 */
+  --pb4: #C09878;
+  /* 暖玫瑰 */
   --pb-opacity: 0.36;
   --pb-blur: 65px;
 }
