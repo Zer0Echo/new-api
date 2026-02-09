@@ -826,6 +826,303 @@ html:not(.dark) .blur-ball-teal {
   opacity: 0.18;
 }
 
+/* ==================== Homepage Code Block ==================== */
+/* Warm terracotta code theme -- light mode */
+:root {
+  --code-bg: #FAF5F0;
+  --code-border: rgba(218, 119, 86, 0.20);
+  --code-header-bg: #F5EDE6;
+  --code-tab-text: rgba(61, 57, 41, 0.60);
+  --code-tab-active-text: #DA7756;
+  --code-tab-active-border: #DA7756;
+  --code-text: #3D3929;
+  --code-keyword: #BD5D3A;
+  --code-string: #6B8F3C;
+  --code-comment: rgba(61, 57, 41, 0.40);
+  --code-function: #C4643F;
+  --code-number: #8B7355;
+  --code-property: #8B6914;
+  --code-url-base: #DA7756;
+  --code-copy-bg: rgba(218, 119, 86, 0.10);
+  --code-copy-hover: rgba(218, 119, 86, 0.20);
+  --code-scrollbar-thumb: rgba(61, 57, 41, 0.15);
+}
+
+/* Warm terracotta code theme -- dark mode */
+body[theme-mode="dark"] {
+  --code-bg: #2A2520;
+  --code-border: rgba(224, 139, 109, 0.20);
+  --code-header-bg: #332D27;
+  --code-tab-text: rgba(232, 228, 217, 0.50);
+  --code-tab-active-text: #E08B6D;
+  --code-tab-active-border: #E08B6D;
+  --code-text: #E8E4D9;
+  --code-keyword: #E08B6D;
+  --code-string: #A8C76A;
+  --code-comment: rgba(232, 228, 217, 0.35);
+  --code-function: #E89B80;
+  --code-number: #D4A96A;
+  --code-property: #E8B86D;
+  --code-url-base: #E08B6D;
+  --code-copy-bg: rgba(224, 139, 109, 0.15);
+  --code-copy-hover: rgba(224, 139, 109, 0.25);
+  --code-scrollbar-thumb: rgba(232, 228, 217, 0.15);
+}
+
+.home-code-block {
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  width: 100%;
+  max-width: 640px;
+  text-align: left;
+}
+
+.home-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--code-header-bg);
+  border-bottom: 1px solid var(--code-border);
+  padding: 0 12px;
+  height: 44px;
+  gap: 4px;
+}
+
+.home-code-tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.home-code-tab {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--code-tab-text);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.home-code-tab:hover {
+  color: var(--code-tab-active-text);
+}
+
+.home-code-tab-active {
+  color: var(--code-tab-active-text);
+  border-bottom-color: var(--code-tab-active-border);
+}
+
+.home-code-body {
+  padding: 16px 20px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--code-text);
+  scrollbar-width: thin;
+  scrollbar-color: var(--code-scrollbar-thumb) transparent;
+}
+
+.home-code-body::-webkit-scrollbar {
+  height: 4px;
+}
+
+.home-code-body::-webkit-scrollbar-thumb {
+  background: var(--code-scrollbar-thumb);
+  border-radius: 2px;
+}
+
+.home-code-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Override highlight.js colors within homepage code block */
+.home-code-block .hljs {
+  background: transparent !important;
+  padding: 0 !important;
+  color: var(--code-text) !important;
+}
+
+.home-code-block .hljs-keyword,
+.home-code-block .hljs-selector-tag,
+.home-code-block .hljs-built_in { color: var(--code-keyword) !important; }
+
+.home-code-block .hljs-string,
+.home-code-block .hljs-attr { color: var(--code-string) !important; }
+
+.home-code-block .hljs-comment,
+.home-code-block .hljs-quote { color: var(--code-comment) !important; font-style: italic; }
+
+.home-code-block .hljs-function,
+.home-code-block .hljs-title { color: var(--code-function) !important; }
+
+.home-code-block .hljs-number,
+.home-code-block .hljs-literal { color: var(--code-number) !important; }
+
+.home-code-block .hljs-property,
+.home-code-block .hljs-attribute { color: var(--code-property) !important; }
+
+/* Base URL display */
+.home-base-url {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-size: 14px;
+  color: var(--code-url-base);
+  font-weight: 500;
+  max-width: 640px;
+  width: 100%;
+  text-align: left;
+}
+
+.home-base-url-label {
+  color: var(--code-comment);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.home-base-url-value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Endpoint ticker */
+.home-endpoints {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--code-tab-text);
+  max-width: 640px;
+  width: 100%;
+  padding: 4px 0;
+  overflow: hidden;
+  text-align: left;
+}
+
+.home-endpoint-item {
+  animation: fadeSlideUp 0.4s ease;
+  color: var(--code-text);
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Decorative code braces */
+.home-deco-brace {
+  position: absolute;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-weight: 300;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+/* Provider marquee */
+@keyframes marqueeScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.home-provider-marquee {
+  display: flex;
+  animation: marqueeScroll 30s linear infinite;
+}
+
+.home-provider-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Copy button */
+.home-copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--code-copy-bg);
+  color: var(--code-tab-text);
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  gap: 4px;
+  transition: all 0.15s ease;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.home-copy-btn:hover {
+  background: var(--code-copy-hover);
+  color: var(--code-tab-active-text);
+}
+
+/* Mobile responsive */
+@media (max-width: 767px) {
+  .home-code-block {
+    max-width: 100%;
+    border-radius: 8px;
+  }
+
+  .home-code-body {
+    padding: 12px 14px;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .home-code-header {
+    padding: 0 8px;
+    height: 40px;
+  }
+
+  .home-code-tab {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .home-base-url {
+    max-width: 100%;
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+
+  .home-endpoints {
+    max-width: 100%;
+    font-size: 11px;
+  }
+
+  .home-deco-brace {
+    display: none;
+  }
+}
+
 /* ==================== 卡片马卡龙模糊球（类封装） ==================== */
 /* 使用方式：给容器加上 with-pastel-balls 类即可，无需在 JSX 中插入额外节点 */
 .with-pastel-balls {
