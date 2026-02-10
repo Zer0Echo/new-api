@@ -24,8 +24,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./data:/data
-      - ./logs:/app/logs
+      - ./data:/data:z
+      - ./logs:/app/logs:z
     environment:
       - SQL_DSN=postgresql://root:Chyshabi666@postgres:5432/new-api # ⚠️ IMPORTANT: Change the password in production!
 #      - SQL_DSN=root:123456@tcp(mysql:3306)/new-api  # Point to the mysql service, uncomment if using MySQL
