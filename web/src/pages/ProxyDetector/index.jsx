@@ -633,6 +633,7 @@ const ProxyDetector = () => {
             <Form.Slot label={t('选择检测模型')}>
               <div className='flex gap-2 items-start w-full'>
                 <Select
+                  key={claudeModels.join(',')}
                   multiple
                   value={selectedModels}
                   onChange={(val) => setSelectedModels((val || []).slice(0, 6))}
