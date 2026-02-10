@@ -120,30 +120,36 @@ const ProxyDetector = () => {
   const handleScreenshot = async () => {
     if (!summaryRef.current) return;
     try {
+      // warmup call — html-to-image needs this to load fonts/styles
+      await toPng(summaryRef.current, { backgroundColor: '#ffffff' });
       const dataUrl = await toPng(summaryRef.current, {
         backgroundColor: '#ffffff',
         pixelRatio: 2,
       });
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      await navigator.clipboard.write([
-        new ClipboardItem({ 'image/png': blob }),
-      ]);
-      Toast.success(t('已复制截图到剪贴板'));
-    } catch {
-      try {
-        const dataUrl = await toPng(summaryRef.current, {
-          backgroundColor: '#ffffff',
-          pixelRatio: 2,
-        });
-        const link = document.createElement('a');
-        link.download = `proxy-detect-${Date.now()}.png`;
-        link.href = dataUrl;
-        link.click();
-        Toast.info(t('已下载截图'));
-      } catch {
-        Toast.error(t('截图失败'));
+
+      // Try clipboard API (requires HTTPS)
+      if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+        try {
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob }),
+          ]);
+          Toast.success(t('已复制截图到剪贴板'));
+          return;
+        } catch {
+          // clipboard failed, fall through to download
+        }
       }
+
+      // Fallback: download file
+      const link = document.createElement('a');
+      link.download = `proxy-detect-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+      Toast.info(t('已下载截图'));
+    } catch {
+      Toast.error(t('截图失败'));
     }
   };
 
@@ -708,7 +714,7 @@ const ProxyDetector = () => {
 
         {/* Loading */}
         {loading && (
-          <div className='flex justify-center py-8'>
+          <div className='text-center py-8'>
             <Spin size='large' tip={t('正在探测中，请稍候...')} />
           </div>
         )}
