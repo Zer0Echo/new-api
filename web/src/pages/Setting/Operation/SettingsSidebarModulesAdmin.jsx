@@ -70,6 +70,10 @@ export default function SettingsSidebarModulesAdmin(props) {
       subscription: true,
       setting: true,
     },
+    apps: {
+      enabled: true,
+      'proxy-detector': true,
+    },
   });
 
   // 处理区域级别开关变更
@@ -132,6 +136,10 @@ export default function SettingsSidebarModulesAdmin(props) {
         'ticket-management': true,
         subscription: true,
         setting: true,
+      },
+      apps: {
+        enabled: true,
+        'proxy-detector': true,
       },
     };
     setSidebarModulesAdmin(defaultModules);
@@ -203,6 +211,10 @@ export default function SettingsSidebarModulesAdmin(props) {
             'ticket-management': true,
             subscription: true,
             setting: true,
+          },
+          apps: {
+            enabled: true,
+            'proxy-detector': true,
           },
         };
         setSidebarModulesAdmin(defaultModules);
@@ -287,6 +299,18 @@ export default function SettingsSidebarModulesAdmin(props) {
           key: 'setting',
           title: t('系统设置'),
           description: t('系统参数配置'),
+        },
+      ],
+    },
+    {
+      key: 'apps',
+      title: t('站内应用区域'),
+      description: t('站内工具和实用应用'),
+      modules: [
+        {
+          key: 'proxy-detector',
+          title: t('检测工具'),
+          description: t('CC代理检测工具'),
         },
       ],
     },

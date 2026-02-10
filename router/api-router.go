@@ -375,6 +375,13 @@ func SetApiRouter(router *gin.Engine) {
 			deploymentsRoute.DELETE("/:id", controller.DeleteDeployment)
 		}
 
+		proxyDetectRoute := apiRouter.Group("/proxy-detect")
+		proxyDetectRoute.Use(middleware.UserAuth(), middleware.CriticalRateLimit())
+		{
+			proxyDetectRoute.POST("/models", controller.ProxyDetectListModels)
+			proxyDetectRoute.POST("/detect", controller.ProxyDetect)
+		}
+
 		ticketRoute := apiRouter.Group("/ticket")
 		{
 			ticketUserRoute := ticketRoute.Group("/")

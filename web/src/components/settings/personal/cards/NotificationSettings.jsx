@@ -90,6 +90,10 @@ const NotificationSettings = ({
       user: true,
       setting: true,
     },
+    apps: {
+      enabled: true,
+      'proxy-detector': true,
+    },
   });
   const [adminConfig, setAdminConfig] = useState(null);
 
@@ -172,6 +176,10 @@ const NotificationSettings = ({
         redemption: true,
         user: true,
         setting: true,
+      },
+      apps: {
+        enabled: true,
+        'proxy-detector': true,
       },
     };
     setSidebarModulesUser(defaultConfig);
@@ -306,6 +314,18 @@ const NotificationSettings = ({
           key: 'setting',
           title: t('系统设置'),
           description: t('系统参数配置'),
+        },
+      ],
+    },
+    {
+      key: 'apps',
+      title: t('站内应用区域'),
+      description: t('站内工具和实用应用'),
+      modules: [
+        {
+          key: 'proxy-detector',
+          title: t('检测工具'),
+          description: t('CC代理检测工具'),
         },
       ],
     },

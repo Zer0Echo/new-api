@@ -56,6 +56,10 @@ export const DEFAULT_ADMIN_CONFIG = {
     subscription: true,
     setting: true,
   },
+  apps: {
+    enabled: true,
+    'proxy-detector': true,
+  },
 };
 
 const deepClone = (value) => JSON.parse(JSON.stringify(value));

@@ -52,6 +52,7 @@ import SetupCheck from './components/layout/SetupCheck';
 
 const Ticket = lazy(() => import('./pages/Ticket'));
 const TicketManagement = lazy(() => import('./pages/TicketManagement'));
+const ProxyDetector = lazy(() => import('./pages/ProxyDetector'));
 
 const Home = lazy(() => import('./pages/Home'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -311,6 +312,16 @@ function App() {
             <PrivateRoute>
               <Suspense fallback={<Loading></Loading>} key={location.pathname}>
                 <Ticket />
+              </Suspense>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/proxy-detector'
+          element={
+            <PrivateRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <ProxyDetector />
               </Suspense>
             </PrivateRoute>
           }
