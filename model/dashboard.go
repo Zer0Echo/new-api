@@ -24,6 +24,13 @@ type DashboardOverview struct {
 	TotalConsumed     int     `json:"total_consumed"`
 	EstimatedProfit   float64 `json:"estimated_profit"`
 
+	// Subscription info (user dashboard)
+	HasSubscription        bool   `json:"has_subscription"`
+	SubscriptionQuotaTotal int64  `json:"subscription_quota_total"`
+	SubscriptionQuotaUsed  int64  `json:"subscription_quota_used"`
+	SubscriptionPlanTitle  string `json:"subscription_plan_title"`
+	SubscriptionEndTime    int64  `json:"subscription_end_time"`
+
 	// Row 2: Performance
 	TotalTokens   int64   `json:"total_tokens"`
 	TotalRequests int64   `json:"total_requests"`
@@ -522,6 +529,19 @@ func GetDashboardOverviewUser(userId int, startTs, endTs int64) (*DashboardOverv
 	// Row 1 (user-specific, snapshot)
 	o.TotalBalance, _ = DashboardGetUserBalance(userId)
 	o.TotalConsumed, _ = DashboardGetUserUsedQuota(userId)
+
+	// Subscription info
+	subMap, err := GetActiveSubscriptionsByUserIds([]int{userId})
+	if err == nil {
+		if sub, ok := subMap[userId]; ok {
+			o.HasSubscription = true
+			o.SubscriptionQuotaTotal = sub.AmountTotal
+			o.SubscriptionQuotaUsed = sub.AmountUsed
+			o.SubscriptionEndTime = sub.EndTime
+			titles, _ := GetSubscriptionPlanTitlesByIds([]int{sub.PlanId})
+			o.SubscriptionPlanTitle = titles[sub.PlanId]
+		}
+	}
 
 	// Row 2 (filtered)
 	o.TotalTokens, _ = DashboardSumTokens(perfStart, perfEnd, userId)

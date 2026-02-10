@@ -82,14 +82,32 @@ const ADMIN_CARDS = [
   },
 ];
 
-const USER_CARDS = [
+const USER_CARDS = (t) => [
   {
-    key: 'balance',
-    labelKey: '当前余额',
+    key: 'wallet_balance',
+    labelKey: '钱包额度',
     icon: Wallet,
     color: '#10b981',
     bg: '#ecfdf5',
     format: (d) => renderQuota(d?.total_balance),
+  },
+  {
+    key: 'subscription_balance',
+    labelKey: '订阅额度',
+    icon: Crown,
+    color: '#8b5cf6',
+    bg: '#f5f3ff',
+    format: (d) => {
+      if (!d?.has_subscription) return t('无订阅');
+      if (!d?.subscription_quota_total) return '∞';
+      const remain =
+        d.subscription_quota_total - d.subscription_quota_used;
+      return renderQuota(remain);
+    },
+    sub: (d) => {
+      if (!d?.has_subscription) return '';
+      return d.subscription_plan_title || '';
+    },
   },
   {
     key: 'consumed',
@@ -118,10 +136,10 @@ const USER_CARDS = [
 ];
 
 const StatMiniCards = ({ data, loading, isAdmin, t }) => {
-  const cards = isAdmin ? ADMIN_CARDS : USER_CARDS;
+  const cards = isAdmin ? ADMIN_CARDS : USER_CARDS(t);
   const gridCols = isAdmin
     ? 'grid-cols-2 md:grid-cols-4 xl:grid-cols-8'
-    : 'grid-cols-2 md:grid-cols-4';
+    : 'grid-cols-2 md:grid-cols-5';
 
   return (
     <div className={`grid ${gridCols} gap-3 mb-4`}>

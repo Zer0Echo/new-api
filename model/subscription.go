@@ -698,6 +698,46 @@ func GetAllUserSubscriptions(userId int) ([]SubscriptionSummary, error) {
 	return buildSubscriptionSummaries(subs), nil
 }
 
+// GetActiveSubscriptionsByUserIds batch-fetches the latest active subscription for each user.
+// Returns a map of userId -> *UserSubscription (at most one per user, the latest by end_time).
+func GetActiveSubscriptionsByUserIds(userIds []int) (map[int]*UserSubscription, error) {
+	if len(userIds) == 0 {
+		return map[int]*UserSubscription{}, nil
+	}
+	now := common.GetTimestamp()
+	var subs []UserSubscription
+	err := DB.Where("user_id IN ? AND status = ? AND end_time > ?", userIds, "active", now).
+		Order("end_time desc, id desc").
+		Find(&subs).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[int]*UserSubscription, len(userIds))
+	for i := range subs {
+		if _, exists := result[subs[i].UserId]; !exists {
+			result[subs[i].UserId] = &subs[i]
+		}
+	}
+	return result, nil
+}
+
+// GetSubscriptionPlanTitlesByIds returns a map of planId -> title for given plan IDs.
+func GetSubscriptionPlanTitlesByIds(planIds []int) (map[int]string, error) {
+	if len(planIds) == 0 {
+		return map[int]string{}, nil
+	}
+	var plans []SubscriptionPlan
+	err := DB.Where("id IN ?", planIds).Select("id", "title").Find(&plans).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[int]string, len(plans))
+	for _, p := range plans {
+		result[p.Id] = p.Title
+	}
+	return result, nil
+}
+
 func buildSubscriptionSummaries(subs []UserSubscription) []SubscriptionSummary {
 	if len(subs) == 0 {
 		return []SubscriptionSummary{}

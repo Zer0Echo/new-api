@@ -36,6 +36,7 @@ import UserSubscriptionsModal from './modals/UserSubscriptionsModal';
 const UsersTable = (usersData) => {
   const {
     users,
+    subscriptionMap,
     loading,
     activePage,
     pageSize,
@@ -132,6 +133,7 @@ const UsersTable = (usersData) => {
   const columns = useMemo(() => {
     return getUsersColumns({
       t,
+      subscriptionMap,
       setEditingUser,
       setShowEditUser,
       showPromoteModal: showPromoteUserModal,
@@ -144,6 +146,7 @@ const UsersTable = (usersData) => {
     });
   }, [
     t,
+    subscriptionMap,
     setEditingUser,
     setShowEditUser,
     showPromoteUserModal,

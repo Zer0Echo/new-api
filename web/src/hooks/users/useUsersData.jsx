@@ -29,6 +29,7 @@ export const useUsersData = () => {
 
   // State management
   const [users, setUsers] = useState([]);
+  const [subscriptionMap, setSubscriptionMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [activePage, setActivePage] = useState(1);
   const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
@@ -79,6 +80,7 @@ export const useUsersData = () => {
       setActivePage(data.page);
       setUserCount(data.total);
       setUserFormat(newPageData);
+      setSubscriptionMap(data.subscription_map || {});
     } else {
       showError(message);
     }
@@ -114,6 +116,7 @@ export const useUsersData = () => {
       setActivePage(data.page);
       setUserCount(data.total);
       setUserFormat(newPageData);
+      setSubscriptionMap(data.subscription_map || {});
     } else {
       showError(message);
     }
@@ -277,6 +280,7 @@ export const useUsersData = () => {
   return {
     // Data state
     users,
+    subscriptionMap,
     loading,
     activePage,
     pageSize,

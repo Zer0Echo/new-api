@@ -133,6 +133,79 @@ const renderStatistics = (text, record, showEnableDisableModal, t) => {
   );
 };
 
+// Render subscription quota column
+const renderSubscriptionQuota = (text, record, subscriptionMap, t) => {
+  const { Paragraph } = Typography;
+  const sub = subscriptionMap?.[record.id];
+  if (!sub) {
+    return (
+      <Tag color='grey' shape='circle' size='small'>
+        {t('无订阅')}
+      </Tag>
+    );
+  }
+
+  const total = parseInt(sub.amount_total) || 0;
+  const used = parseInt(sub.amount_used) || 0;
+  const remain = total > 0 ? total - used : 0;
+  const percent = total > 0 ? (remain / total) * 100 : 0;
+  const endDate = sub.end_time
+    ? new Date(sub.end_time * 1000).toLocaleDateString()
+    : '-';
+
+  const popoverContent = (
+    <div className='text-xs p-2'>
+      <div className='mb-1 font-medium'>
+        {t('套餐')}: {sub.plan_title || '-'}
+      </div>
+      {total > 0 ? (
+        <>
+          <Paragraph copyable={{ content: renderQuota(used) }}>
+            {t('已用额度')}: {renderQuota(used)}
+          </Paragraph>
+          <Paragraph copyable={{ content: renderQuota(remain) }}>
+            {t('剩余额度')}: {renderQuota(remain)} ({percent.toFixed(0)}%)
+          </Paragraph>
+          <Paragraph copyable={{ content: renderQuota(total) }}>
+            {t('总额度')}: {renderQuota(total)}
+          </Paragraph>
+        </>
+      ) : (
+        <div>{t('不限量')}</div>
+      )}
+      <div>
+        {t('到期时间')}: {endDate}
+      </div>
+    </div>
+  );
+
+  return (
+    <Popover content={popoverContent} position='top'>
+      <Tag color='white' shape='circle'>
+        <div className='flex flex-col items-end'>
+          <span className='text-xs leading-none font-medium'>
+            {sub.plan_title}
+          </span>
+          {total > 0 ? (
+            <>
+              <span className='text-xs leading-none'>{`${renderQuota(remain)} / ${renderQuota(total)}`}</span>
+              <Progress
+                percent={percent}
+                aria-label='subscription quota usage'
+                format={() => `${percent.toFixed(0)}%`}
+                style={{ width: '100%', marginTop: '1px', marginBottom: 0 }}
+              />
+            </>
+          ) : (
+            <span className='text-xs leading-none'>∞</span>
+          )}
+          <span className='text-xs text-gray-400'>{endDate}</span>
+        </div>
+      </Tag>
+    </Popover>
+  );
+};
+
 // Render separate quota usage column
 const renderQuotaUsage = (text, record, t) => {
   const { Paragraph } = Typography;
@@ -300,6 +373,7 @@ const renderOperations = (
  */
 export const getUsersColumns = ({
   t,
+  subscriptionMap,
   setEditingUser,
   setShowEditUser,
   showPromoteModal,
@@ -327,8 +401,14 @@ export const getUsersColumns = ({
         renderStatistics(text, record, showEnableDisableModal, t),
     },
     {
-      title: t('剩余额度/总额度'),
-      key: 'quota_usage',
+      title: t('订阅额度'),
+      key: 'subscription_quota',
+      render: (text, record) =>
+        renderSubscriptionQuota(text, record, subscriptionMap, t),
+    },
+    {
+      title: t('钱包额度'),
+      key: 'wallet_quota',
       render: (text, record) => renderQuotaUsage(text, record, t),
     },
     {

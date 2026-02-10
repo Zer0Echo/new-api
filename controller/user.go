@@ -237,8 +237,18 @@ func GetAllUsers(c *gin.Context) {
 	pageInfo.SetTotal(int(total))
 	pageInfo.SetItems(users)
 
-	common.ApiSuccess(c, pageInfo)
-	return
+	subscriptionMap := buildUserSubscriptionMap(users)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data": gin.H{
+			"page":             pageInfo.Page,
+			"page_size":        pageInfo.PageSize,
+			"total":            pageInfo.Total,
+			"items":            pageInfo.Items,
+			"subscription_map": subscriptionMap,
+		},
+	})
 }
 
 func SearchUsers(c *gin.Context) {
@@ -253,8 +263,63 @@ func SearchUsers(c *gin.Context) {
 
 	pageInfo.SetTotal(int(total))
 	pageInfo.SetItems(users)
-	common.ApiSuccess(c, pageInfo)
-	return
+
+	subscriptionMap := buildUserSubscriptionMap(users)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data": gin.H{
+			"page":             pageInfo.Page,
+			"page_size":        pageInfo.PageSize,
+			"total":            pageInfo.Total,
+			"items":            pageInfo.Items,
+			"subscription_map": subscriptionMap,
+		},
+	})
+}
+
+func buildUserSubscriptionMap(users []*model.User) map[int]*dto.UserSubscriptionInfo {
+	if len(users) == 0 {
+		return map[int]*dto.UserSubscriptionInfo{}
+	}
+	userIds := make([]int, 0, len(users))
+	for _, u := range users {
+		userIds = append(userIds, u.Id)
+	}
+
+	subMap, err := model.GetActiveSubscriptionsByUserIds(userIds)
+	if err != nil {
+		common.SysLog("failed to batch fetch subscriptions: " + err.Error())
+		return map[int]*dto.UserSubscriptionInfo{}
+	}
+
+	planIds := make([]int, 0)
+	seen := make(map[int]bool)
+	for _, sub := range subMap {
+		if !seen[sub.PlanId] {
+			planIds = append(planIds, sub.PlanId)
+			seen[sub.PlanId] = true
+		}
+	}
+
+	planTitles, err := model.GetSubscriptionPlanTitlesByIds(planIds)
+	if err != nil {
+		common.SysLog("failed to batch fetch plan titles: " + err.Error())
+		planTitles = map[int]string{}
+	}
+
+	result := make(map[int]*dto.UserSubscriptionInfo, len(subMap))
+	for userId, sub := range subMap {
+		result[userId] = &dto.UserSubscriptionInfo{
+			PlanTitle:   planTitles[sub.PlanId],
+			PlanId:      sub.PlanId,
+			AmountTotal: sub.AmountTotal,
+			AmountUsed:  sub.AmountUsed,
+			EndTime:     sub.EndTime,
+			Status:      sub.Status,
+		}
+	}
+	return result
 }
 
 func GetUser(c *gin.Context) {
