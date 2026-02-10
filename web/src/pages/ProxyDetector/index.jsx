@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext, useMemo } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import {
   Card,
   Form,
@@ -16,8 +16,6 @@ import {
   Toast,
   Checkbox,
 } from '@douyinfe/semi-ui';
-import { Camera } from 'lucide-react';
-import { toPng } from 'html-to-image';
 import { useTranslation } from 'react-i18next';
 import { StatusContext } from '../../context/Status';
 import { API, isAdmin, showError } from '../../helpers';
@@ -51,7 +49,6 @@ const ProxyDetector = () => {
   const [result, setResult] = useState(null);
   const [claudeModels, setClaudeModels] = useState([]);
   const [verifyRatelimit, setVerifyRatelimit] = useState(false);
-  const summaryRef = useRef(null);
 
   const effectiveBaseURL = admin ? (baseURL || serverAddress) : serverAddress;
 
@@ -114,42 +111,6 @@ const ProxyDetector = () => {
       showError(err.message || t('检测请求失败'));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleScreenshot = async () => {
-    if (!summaryRef.current) return;
-    try {
-      // warmup call — html-to-image needs this to load fonts/styles
-      await toPng(summaryRef.current, { backgroundColor: '#ffffff' });
-      const dataUrl = await toPng(summaryRef.current, {
-        backgroundColor: '#ffffff',
-        pixelRatio: 2,
-      });
-
-      // Try clipboard API (requires HTTPS)
-      if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
-        try {
-          const res = await fetch(dataUrl);
-          const blob = await res.blob();
-          await navigator.clipboard.write([
-            new ClipboardItem({ 'image/png': blob }),
-          ]);
-          Toast.success(t('已复制截图到剪贴板'));
-          return;
-        } catch {
-          // clipboard failed, fall through to download
-        }
-      }
-
-      // Fallback: download file
-      const link = document.createElement('a');
-      link.download = `proxy-detect-${Date.now()}.png`;
-      link.href = dataUrl;
-      link.click();
-      Toast.info(t('已下载截图'));
-    } catch {
-      Toast.error(t('截图失败'));
     }
   };
 
@@ -258,35 +219,22 @@ const ProxyDetector = () => {
     },
   ];
 
-  const renderSingleResult = (res, showScreenshot = false) => {
+  const renderSingleResult = (res) => {
     if (!res) return null;
     return (
       <div className='space-y-4'>
         {/* Summary Card */}
-        <div ref={showScreenshot ? summaryRef : undefined}>
-          <Card
-            style={{
-              borderLeft: `4px solid var(--semi-color-${
-                res.verdict === 'suspicious'
-                  ? 'warning'
-                  : res.verdict === 'unknown'
-                    ? 'text-3'
-                    : 'success'
-              })`,
-            }}
-            headerExtraContent={
-              showScreenshot ? (
-                <Button
-                  icon={<Camera size={14} />}
-                  size='small'
-                  theme='borderless'
-                  onClick={handleScreenshot}
-                >
-                  {t('复制截图')}
-                </Button>
-              ) : undefined
-            }
-          >
+        <Card
+          style={{
+            borderLeft: `4px solid var(--semi-color-${
+              res.verdict === 'suspicious'
+                ? 'warning'
+                : res.verdict === 'unknown'
+                  ? 'text-3'
+                  : 'success'
+            })`,
+          }}
+        >
           <div className='space-y-3'>
             <div className='flex items-center gap-3 flex-wrap'>
               <Text strong style={{ fontSize: 14 }}>
@@ -354,7 +302,6 @@ const ProxyDetector = () => {
             )}
           </div>
           </Card>
-        </div>
 
         {/* Evidence Chain */}
         {res.evidence && res.evidence.length > 0 && (
@@ -464,20 +411,7 @@ const ProxyDetector = () => {
         )}
 
         {/* Summary Table */}
-        <div ref={summaryRef}>
-          <Card
-            title={t('扫描总览')}
-            headerExtraContent={
-              <Button
-                icon={<Camera size={14} />}
-                size='small'
-                theme='borderless'
-                onClick={handleScreenshot}
-              >
-                {t('复制截图')}
-              </Button>
-            }
-          >
+        <Card title={t('扫描总览')}>
             <Table
               columns={summaryColumns}
               dataSource={scan.model_results}
@@ -486,7 +420,6 @@ const ProxyDetector = () => {
               rowKey={(record) => record.model}
             />
           </Card>
-        </div>
 
         {/* Per-model Details */}
         <Collapse>
@@ -714,8 +647,9 @@ const ProxyDetector = () => {
 
         {/* Loading */}
         {loading && (
-          <div className='text-center py-8'>
-            <Spin size='large' tip={t('正在探测中，请稍候...')} />
+          <div className='flex flex-col items-center py-8 gap-3'>
+            <Spin size='large' />
+            <Text type='tertiary'>{t('正在探测中，请稍候...')}</Text>
           </div>
         )}
 
@@ -723,7 +657,7 @@ const ProxyDetector = () => {
         {!loading && isSingleResult && (
           <div className='space-y-4'>
             <Title heading={5}>{t('检测结果')}</Title>
-            {renderSingleResult(result.model_results[0], true)}
+            {renderSingleResult(result.model_results[0])}
           </div>
         )}
 
