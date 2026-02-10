@@ -6,9 +6,9 @@ on:
       - "v*"
   workflow_dispatch:
     inputs:
-      version:
-        description: "Version label for the image (e.g. v1.0.0). Leave empty to use git describe."
-        required: false
+      tag:
+        description: "Existing git tag to rebuild (e.g. v1.0.0)"
+        required: true
         type: string
 
 env:
@@ -34,16 +34,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Resolve version
         run: |
-          if [ -n "${{ inputs.version }}" ]; then
-            TAG="${{ inputs.version }}"
-          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            TAG="${GITHUB_REF#refs/tags/}"
-          else
-            TAG="$(git describe --tags --always)"
-          fi
+          TAG="$(git describe --tags --exact-match 2>/dev/null)" || {
+            echo "ERROR: HEAD is not on a git tag. Aborting."
+            exit 1
+          }
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "$TAG" > VERSION
           echo "Building $TAG for ${{ matrix.arch }}"
@@ -77,16 +75,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
+
       - name: Resolve version
         run: |
-          if [ -n "${{ inputs.version }}" ]; then
-            TAG="${{ inputs.version }}"
-          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            TAG="${GITHUB_REF#refs/tags/}"
-          else
-            echo "ERROR: Cannot resolve version for manifest"
-            exit 1
-          fi
+          TAG="$(git describe --tags --exact-match)"
           echo "TAG=$TAG" >> "$GITHUB_ENV"
 
       - name: Log in to Docker Hub
