@@ -6,9 +6,9 @@ on:
       - "v*"
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Tag to build (e.g. v1.0.0)"
-        required: true
+      version:
+        description: "Version label for the image (e.g. v1.0.0). Leave empty to use git describe."
+        required: false
         type: string
 
 env:
@@ -33,15 +33,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
-          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
 
       - name: Resolve version
         run: |
-          if [ -n "${{ inputs.tag }}" ]; then
-            TAG="${{ inputs.tag }}"
-          else
+          if [ -n "${{ inputs.version }}" ]; then
+            TAG="${{ inputs.version }}"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
             TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="$(git describe --tags --always)"
           fi
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "$TAG" > VERSION
@@ -78,10 +79,13 @@ jobs:
     steps:
       - name: Resolve version
         run: |
-          if [ -n "${{ inputs.tag }}" ]; then
-            TAG="${{ inputs.tag }}"
-          else
+          if [ -n "${{ inputs.version }}" ]; then
+            TAG="${{ inputs.version }}"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
             TAG="${GITHUB_REF#refs/tags/}"
+          else
+            echo "ERROR: Cannot resolve version for manifest"
+            exit 1
           fi
           echo "TAG=$TAG" >> "$GITHUB_ENV"
 
