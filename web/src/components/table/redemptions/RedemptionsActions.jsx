@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React from 'react';
-import { Button } from '@douyinfe/semi-ui';
+import { Button, Modal } from '@douyinfe/semi-ui';
 
 const RedemptionsActions = ({
   selectedKeys,
@@ -26,6 +26,9 @@ const RedemptionsActions = ({
   setShowEdit,
   batchCopyRedemptions,
   batchDeleteRedemptions,
+  batchDeleteSelectedRedemptions,
+  batchUpdateStatusRedemptions,
+  batchExportRedemptions,
   t,
 }) => {
   // Add new redemption code
@@ -34,6 +37,34 @@ const RedemptionsActions = ({
       id: undefined,
     });
     setShowEdit(true);
+  };
+
+  const handleBatchDeleteSelected = () => {
+    if (selectedKeys.length === 0) return;
+    Modal.confirm({
+      title: t('批量删除兑换码'),
+      content: t('确定要删除所选的 {{count}} 个兑换码吗？', { count: selectedKeys.length }) + ' ' + t('此操作不可撤销'),
+      okType: 'danger',
+      onOk: batchDeleteSelectedRedemptions,
+    });
+  };
+
+  const handleBatchDisable = () => {
+    if (selectedKeys.length === 0) return;
+    Modal.confirm({
+      title: t('批量禁用兑换码'),
+      content: t('确定要禁用所选的 {{count}} 个兑换码吗？', { count: selectedKeys.length }),
+      onOk: () => batchUpdateStatusRedemptions('disable'),
+    });
+  };
+
+  const handleBatchEnable = () => {
+    if (selectedKeys.length === 0) return;
+    Modal.confirm({
+      title: t('批量启用兑换码'),
+      content: t('确定要启用所选的 {{count}} 个兑换码吗？', { count: selectedKeys.length }),
+      onOk: () => batchUpdateStatusRedemptions('enable'),
+    });
   };
 
   return (
@@ -54,6 +85,42 @@ const RedemptionsActions = ({
         size='small'
       >
         {t('复制所选兑换码到剪贴板')}
+      </Button>
+
+      <Button
+        type='danger'
+        className='flex-1 md:flex-initial'
+        onClick={handleBatchDeleteSelected}
+        size='small'
+      >
+        {t('删除所选兑换码')}
+      </Button>
+
+      <Button
+        type='warning'
+        className='flex-1 md:flex-initial'
+        onClick={handleBatchDisable}
+        size='small'
+      >
+        {t('禁用所选兑换码')}
+      </Button>
+
+      <Button
+        type='tertiary'
+        className='flex-1 md:flex-initial'
+        onClick={handleBatchEnable}
+        size='small'
+      >
+        {t('启用所选兑换码')}
+      </Button>
+
+      <Button
+        type='tertiary'
+        className='flex-1 md:flex-initial'
+        onClick={batchExportRedemptions}
+        size='small'
+      >
+        {t('导出所选兑换码')}
       </Button>
 
       <Button

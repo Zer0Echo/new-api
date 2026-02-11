@@ -269,6 +269,7 @@ func SetApiRouter(router *gin.Engine) {
 			redemptionRoute.PUT("/", controller.UpdateRedemption)
 			redemptionRoute.DELETE("/invalid", controller.DeleteInvalidRedemption)
 			redemptionRoute.DELETE("/:id", controller.DeleteRedemption)
+			redemptionRoute.POST("/batch", controller.BatchManageRedemption)
 		}
 		quotaRecordRoute := apiRouter.Group("/quota_record")
 		quotaRecordRoute.Use(middleware.AdminAuth())

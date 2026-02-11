@@ -14,6 +14,7 @@ import (
 type DashboardOverview struct {
 	// Row 1: Mini stat cards
 	TotalUsers        int64   `json:"total_users"`
+	ActiveUsers       int64   `json:"active_users"`
 	TodayNewUsers     int64   `json:"today_new_users"`
 	MonthNewUsers     int64   `json:"month_new_users"`
 	SubscriptionUsers int64   `json:"subscription_users"`
@@ -107,6 +108,13 @@ func DashboardCountTotalUsers() (int64, error) {
 func DashboardCountNewUsers(since int64) (int64, error) {
 	var total int64
 	err := DB.Model(&User{}).Where("created_time >= ?", since).Count(&total).Error
+	return total, err
+}
+
+func DashboardCountActiveUsers(sinceDays int) (int64, error) {
+	var total int64
+	since := time.Now().AddDate(0, 0, -sinceDays).Unix()
+	err := DB.Model(&User{}).Where("last_active_time >= ?", since).Count(&total).Error
 	return total, err
 }
 
@@ -462,6 +470,7 @@ func GetDashboardOverviewAdmin(startTs, endTs int64) (*DashboardOverview, error)
 
 	// Row 1 (snapshot data, not affected by time range)
 	o.TotalUsers, _ = DashboardCountTotalUsers()
+	o.ActiveUsers, _ = DashboardCountActiveUsers(3)
 	o.TodayNewUsers, _ = DashboardCountNewUsers(todayStart)
 	o.MonthNewUsers, _ = DashboardCountNewUsers(monthStart)
 	o.SubscriptionUsers, _ = DashboardCountActiveSubscriptionUsers()

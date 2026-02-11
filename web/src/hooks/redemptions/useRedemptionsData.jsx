@@ -272,6 +272,74 @@ export const useRedemptionsData = () => {
     });
   };
 
+  // Batch delete selected redemption codes
+  const batchDeleteSelectedRedemptions = async () => {
+    if (selectedKeys.length === 0) {
+      showError(t('请至少选择一个兑换码！'));
+      return;
+    }
+    setLoading(true);
+    try {
+      const ids = selectedKeys.map((r) => r.id);
+      const res = await API.post('/api/redemption/batch', { ids, action: 'delete' });
+      if (res?.data?.success) {
+        showSuccess(t('已删除 {{count}} 个兑换码', { count: res.data.data }));
+        setSelectedKeys([]);
+        await refresh();
+      } else {
+        showError(res?.data?.message || t('操作失败'));
+      }
+    } catch (error) {
+      showError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Batch enable/disable selected redemption codes
+  const batchUpdateStatusRedemptions = async (action) => {
+    if (selectedKeys.length === 0) {
+      showError(t('请至少选择一个兑换码！'));
+      return;
+    }
+    setLoading(true);
+    try {
+      const ids = selectedKeys.map((r) => r.id);
+      const res = await API.post('/api/redemption/batch', { ids, action });
+      if (res?.data?.success) {
+        const label = action === 'enable' ? t('启用') : t('禁用');
+        showSuccess(t('已{{action}} {{count}} 个兑换码', { action: label, count: res.data.data }));
+        setSelectedKeys([]);
+        await refresh();
+      } else {
+        showError(res?.data?.message || t('操作失败'));
+      }
+    } catch (error) {
+      showError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Batch export selected redemption codes as TXT file
+  const batchExportRedemptions = () => {
+    if (selectedKeys.length === 0) {
+      showError(t('请至少选择一个兑换码！'));
+      return;
+    }
+    let content = '';
+    for (const r of selectedKeys) {
+      content += `${r.key}\n`;
+    }
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `redemption_codes_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Close edit modal
   const closeEdit = () => {
     setShowEdit(false);
@@ -353,6 +421,9 @@ export const useRedemptionsData = () => {
     // Batch operations
     batchCopyRedemptions,
     batchDeleteRedemptions,
+    batchDeleteSelectedRedemptions,
+    batchUpdateStatusRedemptions,
+    batchExportRedemptions,
 
     // Translation function
     t,

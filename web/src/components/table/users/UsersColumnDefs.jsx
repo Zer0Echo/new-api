@@ -426,6 +426,19 @@ export const getUsersColumns = ({
       },
     },
     {
+      title: t('最后活跃'),
+      dataIndex: 'last_active_time',
+      render: (text, record) => {
+        const ts = record.last_active_time || 0;
+        if (!ts) return <Tag color='grey' size='small'>{t('从未活跃')}</Tag>;
+        const days = Math.floor((Date.now() / 1000 - ts) / 86400);
+        if (days < 1) return <Tag color='green' size='small'>{t('今日活跃')}</Tag>;
+        if (days < 7) return <Tag color='blue' size='small'>{days + t('天前')}</Tag>;
+        if (days < 30) return <Tag color='yellow' size='small'>{days + t('天前')}</Tag>;
+        return <Tag color='red' size='small'>{days + t('天前')}</Tag>;
+      },
+    },
+    {
       title: t('邀请信息'),
       dataIndex: 'invite',
       render: (text, record, index) => renderInviteInfo(text, record, t),

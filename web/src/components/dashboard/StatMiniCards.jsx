@@ -21,7 +21,7 @@ const ADMIN_CARDS = [
     color: '#6366f1',
     bg: '#eef2ff',
     format: (d) => formatNumber(d?.total_users),
-    sub: (d, t) => `${t('活跃')} ${formatNumber(d?.total_users)}`,
+    sub: (d, t) => `${t('活跃')} ${formatNumber(d?.active_users || 0)}`,
   },
   {
     key: 'today_new',

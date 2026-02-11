@@ -322,6 +322,8 @@ func TokenAuth() func(c *gin.Context) {
 
 		userCache.WriteContext(c)
 
+		model.UpdateLastActiveTime(token.UserId)
+
 		userGroup := userCache.Group
 		tokenGroup := token.Group
 		if tokenGroup != "" {

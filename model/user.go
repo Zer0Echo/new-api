@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/dto"
@@ -43,6 +45,7 @@ type User struct {
 	AffHistoryQuota  int            `json:"aff_history_quota" gorm:"type:int;default:0;column:aff_history"` // 邀请历史额度
 	InviterId        int            `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
 	CreatedTime      int64          `json:"created_time" gorm:"bigint;autoCreateTime"`
+	LastActiveTime   int64          `json:"last_active_time" gorm:"bigint;default:0;index"`
 	DeletedAt        gorm.DeletedAt `gorm:"index"`
 	LinuxDOId        string         `json:"linux_do_id" gorm:"column:linux_do_id;index"`
 	Setting          string         `json:"setting" gorm:"type:text;column:setting"`
@@ -220,7 +223,7 @@ func GetAllUsers(pageInfo *common.PageInfo) (users []*User, total int64, err err
 	return users, total, nil
 }
 
-func SearchUsers(keyword string, group string, startIdx int, num int) ([]*User, int64, error) {
+func SearchUsers(keyword string, group string, activityFilter string, startIdx int, num int) ([]*User, int64, error) {
 	var users []*User
 	var total int64
 	var err error
@@ -263,6 +266,23 @@ func SearchUsers(keyword string, group string, startIdx int, num int) ([]*User, 
 			query = query.Where(likeCondition,
 				"%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
 		}
+	}
+
+	// 活跃度筛选
+	now := time.Now().Unix()
+	switch activityFilter {
+	case "active_3d":
+		query = query.Where("last_active_time >= ?", now-3*86400)
+	case "active_7d":
+		query = query.Where("last_active_time >= ?", now-7*86400)
+	case "active_30d":
+		query = query.Where("last_active_time >= ?", now-30*86400)
+	case "inactive_7d":
+		query = query.Where("last_active_time < ? OR last_active_time = 0", now-7*86400)
+	case "inactive_30d":
+		query = query.Where("last_active_time < ? OR last_active_time = 0", now-30*86400)
+	case "never":
+		query = query.Where("last_active_time = 0")
 	}
 
 	// 获取总数
@@ -1028,4 +1048,37 @@ func RootUserExists() bool {
 		return false
 	}
 	return true
+}
+
+var lastActiveTimeCache sync.Map
+
+const lastActiveTimeThrottleSeconds int64 = 300
+
+func init() {
+	go func() {
+		ticker := time.NewTicker(10 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			now := common.GetTimestamp()
+			lastActiveTimeCache.Range(func(key, value any) bool {
+				if now-value.(int64) > lastActiveTimeThrottleSeconds*2 {
+					lastActiveTimeCache.Delete(key)
+				}
+				return true
+			})
+		}
+	}()
+}
+
+func UpdateLastActiveTime(id int) {
+	now := common.GetTimestamp()
+	if val, ok := lastActiveTimeCache.Load(id); ok {
+		if now-val.(int64) < lastActiveTimeThrottleSeconds {
+			return
+		}
+	}
+	lastActiveTimeCache.Store(id, now)
+	gopool.Go(func() {
+		DB.Model(&User{}).Where("id = ?", id).Update("last_active_time", now)
+	})
 }
