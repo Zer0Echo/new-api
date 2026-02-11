@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"sort"
 
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
@@ -48,5 +49,34 @@ func GetUserGroups(c *gin.Context) {
 		"success": true,
 		"message": "",
 		"data":    usableGroups,
+	})
+}
+
+func GetGroupPreview(c *gin.Context) {
+	groupModels := model.GetAllGroupModels()
+	groupRatios := ratio_setting.GetGroupRatioCopy()
+
+	type GroupInfo struct {
+		ModelCount int      `json:"model_count"`
+		Models     []string `json:"models"`
+	}
+
+	groups := make(map[string]GroupInfo)
+	for groupName := range groupRatios {
+		models := groupModels[groupName]
+		if models == nil {
+			models = []string{}
+		}
+		sort.Strings(models)
+		groups[groupName] = GroupInfo{
+			ModelCount: len(models),
+			Models:     models,
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data":    groups,
 	})
 }
