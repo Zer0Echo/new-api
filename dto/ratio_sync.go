@@ -5,6 +5,7 @@ type UpstreamDTO struct {
 	Name     string `json:"name" binding:"required"`
 	BaseURL  string `json:"base_url" binding:"required"`
 	Endpoint string `json:"endpoint"`
+	Type     string `json:"type,omitempty"` // e.g. "openrouter" for OpenRouter price sync
 }
 
 type UpstreamRequest struct {

@@ -289,11 +289,14 @@ func DoApiRequest(a Adaptor, c *gin.Context, info *common.RelayInfo, requestBody
 	}
 	// 在 SetupRequestHeader 之后应用 Header Override，确保用户设置优先级最高
 	// 这样可以覆盖默认的 Authorization header 设置
-	headerOverride, err := processHeaderOverride(info, c)
-	if err != nil {
-		return nil, err
+	// 渠道测试时跳过 header passthrough，避免测试因 header override 配置而失败
+	if !info.IsChannelTest {
+		headerOverride, err := processHeaderOverride(info, c)
+		if err != nil {
+			return nil, err
+		}
+		applyHeaderOverrideToRequest(req, headerOverride)
 	}
-	applyHeaderOverrideToRequest(req, headerOverride)
 	resp, err := doRequest(c, req, info)
 	if err != nil {
 		return nil, fmt.Errorf("do request failed: %w", err)
@@ -322,11 +325,14 @@ func DoFormRequest(a Adaptor, c *gin.Context, info *common.RelayInfo, requestBod
 	}
 	// 在 SetupRequestHeader 之后应用 Header Override，确保用户设置优先级最高
 	// 这样可以覆盖默认的 Authorization header 设置
-	headerOverride, err := processHeaderOverride(info, c)
-	if err != nil {
-		return nil, err
+	// 渠道测试时跳过 header passthrough，避免测试因 header override 配置而失败
+	if !info.IsChannelTest {
+		headerOverride, err := processHeaderOverride(info, c)
+		if err != nil {
+			return nil, err
+		}
+		applyHeaderOverrideToRequest(req, headerOverride)
 	}
-	applyHeaderOverrideToRequest(req, headerOverride)
 	resp, err := doRequest(c, req, info)
 	if err != nil {
 		return nil, fmt.Errorf("do request failed: %w", err)
@@ -346,12 +352,15 @@ func DoWssRequest(a Adaptor, c *gin.Context, info *common.RelayInfo, requestBody
 	}
 	// 在 SetupRequestHeader 之后应用 Header Override，确保用户设置优先级最高
 	// 这样可以覆盖默认的 Authorization header 设置
-	headerOverride, err := processHeaderOverride(info, c)
-	if err != nil {
-		return nil, err
-	}
-	for key, value := range headerOverride {
-		targetHeader.Set(key, value)
+	// 渠道测试时跳过 header passthrough
+	if !info.IsChannelTest {
+		headerOverride, err := processHeaderOverride(info, c)
+		if err != nil {
+			return nil, err
+		}
+		for key, value := range headerOverride {
+			targetHeader.Set(key, value)
+		}
 	}
 	targetHeader.Set("Content-Type", c.Request.Header.Get("Content-Type"))
 	targetConn, _, err := websocket.DefaultDialer.Dial(fullRequestURL, targetHeader)

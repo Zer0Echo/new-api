@@ -375,9 +375,15 @@ export const useLogsData = () => {
         });
       }
       if (other?.cache_tokens > 0) {
+        let cacheDisplay = `${other.cache_tokens}`;
+        const promptTokens = logs[i].prompt_tokens;
+        if (promptTokens > 0) {
+          const hitRate = ((other.cache_tokens / promptTokens) * 100).toFixed(1);
+          cacheDisplay += ` (${hitRate}%)`;
+        }
         expandDataLocal.push({
           key: t('缓存 Tokens'),
-          value: other.cache_tokens,
+          value: cacheDisplay,
         });
       }
       if (other?.cache_creation_tokens > 0) {

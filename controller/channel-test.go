@@ -804,6 +804,10 @@ func testAllChannels(notify bool) error {
 		}()
 
 		for _, channel := range channels {
+			// Skip manually disabled channels — only test enabled and auto-disabled channels
+			if channel.Status == common.ChannelStatusManuallyDisabled {
+				continue
+			}
 			isChannelEnabled := channel.Status == common.ChannelStatusEnabled
 			tik := time.Now()
 			result := testChannel(channel, "", "", false)

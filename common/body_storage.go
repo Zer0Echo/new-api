@@ -307,3 +307,11 @@ func CleanupOldCacheFiles() {
 	// 使用统一的缓存管理
 	CleanupOldDiskCacheFiles(5 * time.Minute)
 }
+
+// ReaderOnly wraps a BodyStorage as a plain io.Reader, hiding the Seek/Close
+// interfaces. This is useful when passing the storage to functions that only
+// need to read sequentially (e.g., http.NewRequest body) and where an
+// io.Seeker would cause unwanted behavior.
+func ReaderOnly(r io.Reader) io.Reader {
+	return struct{ io.Reader }{r}
+}

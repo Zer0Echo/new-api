@@ -728,6 +728,10 @@ export const getLogsColumns = ({
               other?.is_system_prompt_overwritten,
               'openai',
             );
+        if (other?.cache_tokens > 0 && record.prompt_tokens > 0) {
+          const hitRate = ((other.cache_tokens / record.prompt_tokens) * 100).toFixed(1);
+          content += `\n${t('缓存命中')}: ${other.cache_tokens} tokens (${hitRate}%)`;
+        }
         return (
             <Typography.Paragraph
                 ellipsis={{

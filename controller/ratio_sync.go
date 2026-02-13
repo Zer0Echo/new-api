@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/logger"
 
 	"github.com/QuantumNous/new-api/dto"
@@ -90,12 +91,16 @@ func FetchUpstreamRatios(c *gin.Context) {
 		}
 		for _, ch := range dbChannels {
 			if base := ch.GetBaseURL(); strings.HasPrefix(base, "http") {
-				upstreams = append(upstreams, dto.UpstreamDTO{
+				u := dto.UpstreamDTO{
 					ID:       ch.Id,
 					Name:     ch.Name,
 					BaseURL:  strings.TrimRight(base, "/"),
 					Endpoint: "",
-				})
+				}
+				if ch.Type == constant.ChannelTypeOpenRouter {
+					u.Type = "openrouter"
+				}
+				upstreams = append(upstreams, u)
 			}
 		}
 	}
@@ -155,6 +160,18 @@ func FetchUpstreamRatios(c *gin.Context) {
 			uniqueName := chItem.Name
 			if chItem.ID != 0 {
 				uniqueName = fmt.Sprintf("%s(%d)", chItem.Name, chItem.ID)
+			}
+
+			// OpenRouter: fetch from /v1/models and convert pricing
+			if chItem.Type == "openrouter" || chItem.Endpoint == "openrouter" {
+				openRouterURL := chItem.BaseURL + "/v1/models"
+				converted, err := fetchOpenRouterRatioData(c, client, openRouterURL, req.Timeout)
+				if err != nil {
+					ch <- upstreamResult{Name: uniqueName, Err: err.Error()}
+				} else {
+					ch <- upstreamResult{Name: uniqueName, Data: converted}
+				}
+				return
 			}
 
 			ctx, cancel := context.WithTimeout(c.Request.Context(), time.Duration(req.Timeout)*time.Second)
@@ -542,4 +559,99 @@ func GetSyncableChannels(c *gin.Context) {
 		"message": "",
 		"data":    syncableChannels,
 	})
+}
+
+// fetchOpenRouterRatioData fetches model pricing from OpenRouter's /v1/models API
+// and converts it to the local ratio format (model_ratio, completion_ratio, model_price).
+func fetchOpenRouterRatioData(c *gin.Context, client *http.Client, modelsURL string, timeout int) (map[string]any, error) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Duration(timeout)*time.Second)
+	defer cancel()
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, modelsURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("build request failed: %w", err)
+	}
+
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("http error: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("non-200 status: %s", resp.Status)
+	}
+
+	limited := io.LimitReader(resp.Body, maxRatioConfigBytes)
+	var body struct {
+		Data []struct {
+			ID      string `json:"id"`
+			Pricing struct {
+				Prompt     string `json:"prompt"`
+				Completion string `json:"completion"`
+			} `json:"pricing"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(limited).Decode(&body); err != nil {
+		return nil, fmt.Errorf("json decode failed: %w", err)
+	}
+
+	return convertOpenRouterToRatioData(body.Data), nil
+}
+
+// convertOpenRouterToRatioData converts OpenRouter per-token USD pricing to local ratio format.
+// OpenRouter prices are per-token in USD (as strings).
+// model_ratio = prompt_price_per_token * QuotaPerUnit (where QuotaPerUnit = 500000)
+// completion_ratio = completion_price / prompt_price (when prompt_price > 0)
+func convertOpenRouterToRatioData(models []struct {
+	ID      string `json:"id"`
+	Pricing struct {
+		Prompt     string `json:"prompt"`
+		Completion string `json:"completion"`
+	} `json:"pricing"`
+}) map[string]any {
+	modelRatioMap := make(map[string]any)
+	completionRatioMap := make(map[string]any)
+	modelPriceMap := make(map[string]any)
+
+	for _, m := range models {
+		promptPrice := parseFloat(m.Pricing.Prompt)
+		completionPrice := parseFloat(m.Pricing.Completion)
+
+		if promptPrice <= 0 && completionPrice <= 0 {
+			continue
+		}
+
+		// model_ratio = prompt price per 1K tokens / $0.002 = prompt_price * 500000
+		modelRatio := promptPrice * common.QuotaPerUnit
+		modelRatioMap[m.ID] = modelRatio
+
+		// completion_ratio = completion_price / prompt_price
+		if promptPrice > 0 {
+			completionRatioMap[m.ID] = completionPrice / promptPrice
+		}
+
+		// model_price: per-million-token price in USD
+		modelPriceMap[m.ID] = promptPrice * 1000000
+	}
+
+	converted := make(map[string]any)
+	if len(modelRatioMap) > 0 {
+		converted["model_ratio"] = modelRatioMap
+	}
+	if len(completionRatioMap) > 0 {
+		converted["completion_ratio"] = completionRatioMap
+	}
+	if len(modelPriceMap) > 0 {
+		converted["model_price"] = modelPriceMap
+	}
+	return converted
+}
+
+func parseFloat(s string) float64 {
+	if s == "" {
+		return 0
+	}
+	var f float64
+	_, _ = fmt.Sscanf(s, "%f", &f)
+	return f
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -127,10 +128,13 @@ func RelayErrorHandler(ctx context.Context, resp *http.Response, showBodyWhenFai
 }
 
 func ResetStatusCode(newApiErr *types.NewAPIError, statusCodeMappingStr string) {
+	if newApiErr == nil {
+		return
+	}
 	if statusCodeMappingStr == "" || statusCodeMappingStr == "{}" {
 		return
 	}
-	statusCodeMapping := make(map[string]string)
+	statusCodeMapping := make(map[string]any)
 	err := common.Unmarshal([]byte(statusCodeMappingStr), &statusCodeMapping)
 	if err != nil {
 		return
@@ -139,9 +143,28 @@ func ResetStatusCode(newApiErr *types.NewAPIError, statusCodeMappingStr string) 
 		return
 	}
 	codeStr := strconv.Itoa(newApiErr.StatusCode)
-	if _, ok := statusCodeMapping[codeStr]; ok {
-		intCode, _ := strconv.Atoi(statusCodeMapping[codeStr])
-		newApiErr.StatusCode = intCode
+	if val, ok := statusCodeMapping[codeStr]; ok {
+		intCode := parseStatusCodeMappingValue(val)
+		if intCode > 0 {
+			newApiErr.StatusCode = intCode
+		}
+	}
+}
+
+func parseStatusCodeMappingValue(val any) int {
+	switch v := val.(type) {
+	case string:
+		intCode, _ := strconv.Atoi(v)
+		return intCode
+	case float64:
+		return int(v)
+	case int:
+		return v
+	case json.Number:
+		intCode, _ := v.Int64()
+		return int(intCode)
+	default:
+		return 0
 	}
 }
 
