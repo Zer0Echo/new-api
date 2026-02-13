@@ -91,6 +91,7 @@ const AddEditSubscriptionModal = ({
     quota_reset_period: 'never',
     quota_reset_custom_seconds: 0,
     enabled: true,
+    purchasable: true,
     sort_order: 0,
     max_purchase_per_user: 0,
     total_amount: 0,
@@ -115,6 +116,7 @@ const AddEditSubscriptionModal = ({
       quota_reset_period: p.quota_reset_period || 'never',
       quota_reset_custom_seconds: Number(p.quota_reset_custom_seconds || 0),
       enabled: p.enabled !== false,
+      purchasable: p.purchasable !== false,
       sort_order: Number(p.sort_order || 0),
       max_purchase_per_user: Number(p.max_purchase_per_user || 0),
       total_amount: Number(
@@ -376,6 +378,14 @@ const AddEditSubscriptionModal = ({
                         field='enabled'
                         label={t('启用状态')}
                         size='large'
+                      />
+                    </Col>
+                    <Col span={12}>
+                      <Form.Switch
+                        field='purchasable'
+                        label={t('允许购买')}
+                        size='large'
+                        extraText={t('关闭后仅可通过兑换码激活')}
                       />
                     </Col>
                   </Row>

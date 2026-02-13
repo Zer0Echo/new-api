@@ -27,3 +27,6 @@ data/
 .gomodcache/
 .gocache-temp
 .gopath
+*.sql
+deploy.sh
+cc-proxy-detector/

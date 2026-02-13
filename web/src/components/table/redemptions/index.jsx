@@ -45,6 +45,9 @@ const RedemptionsPage = () => {
     setShowEdit,
     batchCopyRedemptions,
     batchDeleteRedemptions,
+    batchDeleteSelectedRedemptions,
+    batchUpdateStatusRedemptions,
+    batchExportRedemptions,
 
     // Filters state
     formInitValues,
@@ -87,6 +90,9 @@ const RedemptionsPage = () => {
               setShowEdit={setShowEdit}
               batchCopyRedemptions={batchCopyRedemptions}
               batchDeleteRedemptions={batchDeleteRedemptions}
+              batchDeleteSelectedRedemptions={batchDeleteSelectedRedemptions}
+              batchUpdateStatusRedemptions={batchUpdateStatusRedemptions}
+              batchExportRedemptions={batchExportRedemptions}
               t={t}
             />
 

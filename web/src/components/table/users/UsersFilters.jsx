@@ -88,6 +88,29 @@ const UsersFilters = ({
             size='small'
           />
         </div>
+        <div className='w-full md:w-48'>
+          <Form.Select
+            field='searchActivity'
+            placeholder={t('活跃状态')}
+            optionList={[
+              { label: t('3天内活跃'), value: 'active_3d' },
+              { label: t('7天内活跃'), value: 'active_7d' },
+              { label: t('30天内活跃'), value: 'active_30d' },
+              { label: t('7天以上不活跃'), value: 'inactive_7d' },
+              { label: t('30天以上不活跃'), value: 'inactive_30d' },
+              { label: t('从未活跃'), value: 'never' },
+            ]}
+            onChange={() => {
+              setTimeout(() => {
+                searchUsers(1, pageSize);
+              }, 100);
+            }}
+            className='w-full'
+            showClear
+            pure
+            size='small'
+          />
+        </div>
         <div className='flex gap-2 w-full md:w-auto'>
           <Button
             type='tertiary'

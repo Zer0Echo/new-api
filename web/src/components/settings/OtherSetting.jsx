@@ -28,7 +28,13 @@ import {
   Space,
   Card,
 } from '@douyinfe/semi-ui';
-import { API, showError, showSuccess, timestamp2string } from '../../helpers';
+import {
+  API,
+  showError,
+  showSuccess,
+  timestamp2string,
+  setStatusData,
+} from '../../helpers';
 import { marked } from 'marked';
 import { useTranslation } from 'react-i18next';
 import { StatusContext } from '../../context/Status';
@@ -66,6 +72,16 @@ const OtherSetting = () => {
     const { success, message } = res.data;
     if (success) {
       setInputs((inputs) => ({ ...inputs, [key]: value }));
+      // 刷新全局状态，使设置立即生效
+      try {
+        const statusRes = await API.get('/api/status');
+        if (statusRes.data.success) {
+          statusDispatch({ type: 'set', payload: statusRes.data.data });
+          setStatusData(statusRes.data.data);
+        }
+      } catch (e) {
+        // 忽略刷新失败，设置已保存成功
+      }
     } else {
       showError(message);
     }

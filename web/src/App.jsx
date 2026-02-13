@@ -50,6 +50,10 @@ import PersonalSetting from './components/settings/PersonalSetting';
 import Setup from './pages/Setup';
 import SetupCheck from './components/layout/SetupCheck';
 
+const Ticket = lazy(() => import('./pages/Ticket'));
+const TicketManagement = lazy(() => import('./pages/TicketManagement'));
+const ProxyDetector = lazy(() => import('./pages/ProxyDetector'));
+
 const Home = lazy(() => import('./pages/Home'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const About = lazy(() => import('./pages/About'));
@@ -300,6 +304,36 @@ function App() {
                 <Task />
               </Suspense>
             </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/ticket'
+          element={
+            <PrivateRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <Ticket />
+              </Suspense>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/proxy-detector'
+          element={
+            <PrivateRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <ProxyDetector />
+              </Suspense>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/ticket-management'
+          element={
+            <AdminRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <TicketManagement />
+              </Suspense>
+            </AdminRoute>
           }
         />
         <Route

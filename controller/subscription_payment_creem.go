@@ -44,6 +44,10 @@ func SubscriptionRequestCreemPay(c *gin.Context) {
 		common.ApiErrorMsg(c, "套餐未启用")
 		return
 	}
+	if !plan.Purchasable {
+		common.ApiErrorMsg(c, "该套餐不支持直接购买，请使用兑换码")
+		return
+	}
 	if plan.CreemProductId == "" {
 		common.ApiErrorMsg(c, "该套餐未配置 CreemProductId")
 		return

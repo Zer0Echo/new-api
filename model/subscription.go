@@ -156,8 +156,9 @@ type SubscriptionPlan struct {
 	DurationValue int    `json:"duration_value" gorm:"type:int;not null;default:1"`
 	CustomSeconds int64  `json:"custom_seconds" gorm:"type:bigint;not null;default:0"`
 
-	Enabled   bool `json:"enabled" gorm:"default:true"`
-	SortOrder int  `json:"sort_order" gorm:"type:int;default:0"`
+	Enabled     bool `json:"enabled" gorm:"default:true"`
+	Purchasable bool `json:"purchasable" gorm:"default:true"` // false=仅兑换码激活，不可直接购买
+	SortOrder   int  `json:"sort_order" gorm:"type:int;default:0"`
 
 	StripePriceId  string `json:"stripe_price_id" gorm:"type:varchar(128);default:''"`
 	CreemProductId string `json:"creem_product_id" gorm:"type:varchar(128);default:''"`
@@ -695,6 +696,46 @@ func GetAllUserSubscriptions(userId int) ([]SubscriptionSummary, error) {
 		return nil, err
 	}
 	return buildSubscriptionSummaries(subs), nil
+}
+
+// GetActiveSubscriptionsByUserIds batch-fetches the latest active subscription for each user.
+// Returns a map of userId -> *UserSubscription (at most one per user, the latest by end_time).
+func GetActiveSubscriptionsByUserIds(userIds []int) (map[int]*UserSubscription, error) {
+	if len(userIds) == 0 {
+		return map[int]*UserSubscription{}, nil
+	}
+	now := common.GetTimestamp()
+	var subs []UserSubscription
+	err := DB.Where("user_id IN ? AND status = ? AND end_time > ?", userIds, "active", now).
+		Order("end_time desc, id desc").
+		Find(&subs).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[int]*UserSubscription, len(userIds))
+	for i := range subs {
+		if _, exists := result[subs[i].UserId]; !exists {
+			result[subs[i].UserId] = &subs[i]
+		}
+	}
+	return result, nil
+}
+
+// GetSubscriptionPlanTitlesByIds returns a map of planId -> title for given plan IDs.
+func GetSubscriptionPlanTitlesByIds(planIds []int) (map[int]string, error) {
+	if len(planIds) == 0 {
+		return map[int]string{}, nil
+	}
+	var plans []SubscriptionPlan
+	err := DB.Where("id IN ?", planIds).Select("id", "title").Find(&plans).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[int]string, len(plans))
+	for _, p := range plans {
+		result[p.Id] = p.Title
+	}
+	return result, nil
 }
 
 func buildSubscriptionSummaries(subs []UserSubscription) []SubscriptionSummary {

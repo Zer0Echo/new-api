@@ -601,33 +601,39 @@ const SubscriptionPlansCard = ({
                         <Divider margin={12} />
 
                         {/* 购买按钮 */}
-                        {(() => {
-                          const count = getPlanPurchaseCount(p?.plan?.id);
-                          const reached = limit > 0 && count >= limit;
-                          const tip = reached
-                            ? t('已达到购买上限') + ` (${count}/${limit})`
-                            : '';
-                          const buttonEl = (
-                            <Button
-                              theme='outline'
-                              type='primary'
-                              block
-                              disabled={reached}
-                              onClick={() => {
-                                if (!reached) openBuy(p);
-                              }}
-                            >
-                              {reached ? t('已达上限') : t('立即订阅')}
-                            </Button>
-                          );
-                          return reached ? (
-                            <Tooltip content={tip} position='top'>
-                              {buttonEl}
-                            </Tooltip>
-                          ) : (
-                            buttonEl
-                          );
-                        })()}
+                        {plan?.purchasable === false ? (
+                          <Tag color='blue' shape='circle' size='large' style={{ width: '100%', textAlign: 'center' }}>
+                            {t('仅限兑换码激活')}
+                          </Tag>
+                        ) : (
+                          (() => {
+                            const count = getPlanPurchaseCount(p?.plan?.id);
+                            const reached = limit > 0 && count >= limit;
+                            const tip = reached
+                              ? t('已达到购买上限') + ` (${count}/${limit})`
+                              : '';
+                            const buttonEl = (
+                              <Button
+                                theme='outline'
+                                type='primary'
+                                block
+                                disabled={reached}
+                                onClick={() => {
+                                  if (!reached) openBuy(p);
+                                }}
+                              >
+                                {reached ? t('已达上限') : t('立即订阅')}
+                              </Button>
+                            );
+                            return reached ? (
+                              <Tooltip content={tip} position='top'>
+                                {buttonEl}
+                              </Tooltip>
+                            ) : (
+                              buttonEl
+                            );
+                          })()
+                        )}
                       </div>
                     </div>
                   </Card>

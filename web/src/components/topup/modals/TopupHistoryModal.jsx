@@ -53,6 +53,7 @@ const PAYMENT_METHOD_MAP = {
   creem: 'Creem',
   alipay: '支付宝',
   wxpay: '微信',
+  redemption: '兑换码',
 };
 
 const TopupHistoryModal = ({ visible, onCancel, t }) => {
@@ -198,7 +199,12 @@ const TopupHistoryModal = ({ visible, onCancel, t }) => {
         title: t('支付金额'),
         dataIndex: 'money',
         key: 'money',
-        render: (money) => <Text type='danger'>¥{money.toFixed(2)}</Text>,
+        render: (money, record) => {
+          if (record.payment_method === 'redemption') {
+            return <Text type='tertiary'>-</Text>;
+          }
+          return <Text type='danger'>¥{money.toFixed(2)}</Text>;
+        },
       },
       {
         title: t('状态'),

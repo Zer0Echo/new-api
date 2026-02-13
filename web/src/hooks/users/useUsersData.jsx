@@ -29,6 +29,7 @@ export const useUsersData = () => {
 
   // State management
   const [users, setUsers] = useState([]);
+  const [subscriptionMap, setSubscriptionMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [activePage, setActivePage] = useState(1);
   const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
@@ -47,6 +48,7 @@ export const useUsersData = () => {
   const formInitValues = {
     searchKeyword: '',
     searchGroup: '',
+    searchActivity: '',
   };
 
   // Form API reference
@@ -58,6 +60,7 @@ export const useUsersData = () => {
     return {
       searchKeyword: formValues.searchKeyword || '',
       searchGroup: formValues.searchGroup || '',
+      searchActivity: formValues.searchActivity || '',
     };
   };
 
@@ -79,6 +82,7 @@ export const useUsersData = () => {
       setActivePage(data.page);
       setUserCount(data.total);
       setUserFormat(newPageData);
+      setSubscriptionMap(data.subscription_map || {});
     } else {
       showError(message);
     }
@@ -91,22 +95,24 @@ export const useUsersData = () => {
     pageSize,
     searchKeyword = null,
     searchGroup = null,
+    searchActivity = null,
   ) => {
     // If no parameters passed, get values from form
-    if (searchKeyword === null || searchGroup === null) {
+    if (searchKeyword === null || searchGroup === null || searchActivity === null) {
       const formValues = getFormValues();
-      searchKeyword = formValues.searchKeyword;
-      searchGroup = formValues.searchGroup;
+      searchKeyword = searchKeyword ?? formValues.searchKeyword;
+      searchGroup = searchGroup ?? formValues.searchGroup;
+      searchActivity = searchActivity ?? formValues.searchActivity;
     }
 
-    if (searchKeyword === '' && searchGroup === '') {
+    if (searchKeyword === '' && searchGroup === '' && searchActivity === '') {
       // If keyword is blank, load files instead
       await loadUsers(startIdx, pageSize);
       return;
     }
     setSearching(true);
     const res = await API.get(
-      `/api/user/search?keyword=${searchKeyword}&group=${searchGroup}&p=${startIdx}&page_size=${pageSize}`,
+      `/api/user/search?keyword=${searchKeyword}&group=${searchGroup}&activity=${searchActivity}&p=${startIdx}&page_size=${pageSize}`,
     );
     const { success, message, data } = res.data;
     if (success) {
@@ -114,6 +120,7 @@ export const useUsersData = () => {
       setActivePage(data.page);
       setUserCount(data.total);
       setUserFormat(newPageData);
+      setSubscriptionMap(data.subscription_map || {});
     } else {
       showError(message);
     }
@@ -191,11 +198,11 @@ export const useUsersData = () => {
   // Handle page change
   const handlePageChange = (page) => {
     setActivePage(page);
-    const { searchKeyword, searchGroup } = getFormValues();
-    if (searchKeyword === '' && searchGroup === '') {
+    const { searchKeyword, searchGroup, searchActivity } = getFormValues();
+    if (searchKeyword === '' && searchGroup === '' && searchActivity === '') {
       loadUsers(page, pageSize).then();
     } else {
-      searchUsers(page, pageSize, searchKeyword, searchGroup).then();
+      searchUsers(page, pageSize, searchKeyword, searchGroup, searchActivity).then();
     }
   };
 
@@ -226,11 +233,11 @@ export const useUsersData = () => {
 
   // Refresh data
   const refresh = async (page = activePage) => {
-    const { searchKeyword, searchGroup } = getFormValues();
-    if (searchKeyword === '' && searchGroup === '') {
+    const { searchKeyword, searchGroup, searchActivity } = getFormValues();
+    if (searchKeyword === '' && searchGroup === '' && searchActivity === '') {
       await loadUsers(page, pageSize);
     } else {
-      await searchUsers(page, pageSize, searchKeyword, searchGroup);
+      await searchUsers(page, pageSize, searchKeyword, searchGroup, searchActivity);
     }
   };
 
@@ -277,6 +284,7 @@ export const useUsersData = () => {
   return {
     // Data state
     users,
+    subscriptionMap,
     loading,
     activePage,
     pageSize,

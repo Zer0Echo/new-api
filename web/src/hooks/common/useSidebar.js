@@ -38,6 +38,7 @@ export const DEFAULT_ADMIN_CONFIG = {
     log: true,
     midjourney: true,
     task: true,
+    ticket: true,
   },
   personal: {
     enabled: true,
@@ -51,8 +52,13 @@ export const DEFAULT_ADMIN_CONFIG = {
     deployment: true,
     redemption: true,
     user: true,
+    'ticket-management': true,
     subscription: true,
     setting: true,
+  },
+  apps: {
+    enabled: true,
+    'proxy-detector': true,
   },
 };
 

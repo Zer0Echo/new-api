@@ -49,6 +49,9 @@ const routerMap = {
   deployment: '/console/deployment',
   playground: '/console/playground',
   personal: '/console/personal',
+  ticket: '/console/ticket',
+  'ticket-management': '/console/ticket-management',
+  'proxy-detector': '/console/proxy-detector',
 };
 
 const SiderBar = ({ onNavigate = () => {} }) => {
@@ -104,6 +107,11 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         to: '/task',
         className:
           localStorage.getItem('enable_task') === 'true' ? '' : 'tableHiddle',
+      },
+      {
+        text: t('我的工单'),
+        itemKey: 'ticket',
+        to: '/ticket',
       },
     ];
 
@@ -184,6 +192,12 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         className: isAdmin() ? '' : 'tableHiddle',
       },
       {
+        text: t('工单管理'),
+        itemKey: 'ticket-management',
+        to: '/ticket-management',
+        className: isAdmin() ? '' : 'tableHiddle',
+      },
+      {
         text: t('系统设置'),
         itemKey: 'setting',
         to: '/setting',
@@ -199,6 +213,23 @@ const SiderBar = ({ onNavigate = () => {} }) => {
 
     return filteredItems;
   }, [isAdmin(), isRoot(), t, isModuleVisible]);
+
+  const appsItems = useMemo(() => {
+    const items = [
+      {
+        text: t('检测工具'),
+        itemKey: 'proxy-detector',
+        to: '/proxy-detector',
+      },
+    ];
+
+    const filteredItems = items.filter((item) => {
+      const configVisible = isModuleVisible('apps', item.itemKey);
+      return configVisible;
+    });
+
+    return filteredItems;
+  }, [t, isModuleVisible]);
 
   const chatMenuItems = useMemo(() => {
     const items = [
@@ -471,6 +502,19 @@ const SiderBar = ({ onNavigate = () => {} }) => {
                   <div className='sidebar-group-label'>{t('个人中心')}</div>
                 )}
                 {financeItems.map((item) => renderNavItem(item))}
+              </div>
+            </>
+          )}
+
+          {/* 站内应用区域 */}
+          {hasSectionVisibleModules('apps') && (
+            <>
+              <Divider className='sidebar-divider' />
+              <div>
+                {!collapsed && (
+                  <div className='sidebar-group-label'>{t('站内应用')}</div>
+                )}
+                {appsItems.map((item) => renderNavItem(item))}
               </div>
             </>
           )}

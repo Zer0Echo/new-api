@@ -52,6 +52,7 @@ export default function SettingsSidebarModulesAdmin(props) {
       log: true,
       midjourney: true,
       task: true,
+      ticket: true,
     },
     personal: {
       enabled: true,
@@ -65,8 +66,13 @@ export default function SettingsSidebarModulesAdmin(props) {
       deployment: true,
       redemption: true,
       user: true,
+      'ticket-management': true,
       subscription: true,
       setting: true,
+    },
+    apps: {
+      enabled: true,
+      'proxy-detector': true,
     },
   });
 
@@ -113,6 +119,7 @@ export default function SettingsSidebarModulesAdmin(props) {
         log: true,
         midjourney: true,
         task: true,
+        ticket: true,
       },
       personal: {
         enabled: true,
@@ -126,8 +133,13 @@ export default function SettingsSidebarModulesAdmin(props) {
         deployment: true,
         redemption: true,
         user: true,
+        'ticket-management': true,
         subscription: true,
         setting: true,
+      },
+      apps: {
+        enabled: true,
+        'proxy-detector': true,
       },
     };
     setSidebarModulesAdmin(defaultModules);
@@ -186,6 +198,7 @@ export default function SettingsSidebarModulesAdmin(props) {
             log: true,
             midjourney: true,
             task: true,
+            ticket: true,
           },
           personal: { enabled: true, topup: true, personal: true },
           admin: {
@@ -195,8 +208,13 @@ export default function SettingsSidebarModulesAdmin(props) {
             deployment: true,
             redemption: true,
             user: true,
+            'ticket-management': true,
             subscription: true,
             setting: true,
+          },
+          apps: {
+            enabled: true,
+            'proxy-detector': true,
           },
         };
         setSidebarModulesAdmin(defaultModules);
@@ -233,6 +251,7 @@ export default function SettingsSidebarModulesAdmin(props) {
           description: t('绘图任务记录'),
         },
         { key: 'task', title: t('任务日志'), description: t('系统任务记录') },
+        { key: 'ticket', title: t('我的工单'), description: t('用户工单管理') },
       ],
     },
     {
@@ -272,9 +291,26 @@ export default function SettingsSidebarModulesAdmin(props) {
         },
         { key: 'user', title: t('用户管理'), description: t('用户账户管理') },
         {
+          key: 'ticket-management',
+          title: t('工单管理'),
+          description: t('用户工单处理'),
+        },
+        {
           key: 'setting',
           title: t('系统设置'),
           description: t('系统参数配置'),
+        },
+      ],
+    },
+    {
+      key: 'apps',
+      title: t('站内应用区域'),
+      description: t('站内工具和实用应用'),
+      modules: [
+        {
+          key: 'proxy-detector',
+          title: t('检测工具'),
+          description: t('CC代理检测工具'),
         },
       ],
     },

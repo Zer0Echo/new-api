@@ -58,6 +58,23 @@ func GetAllEnableAbilities() []Ability {
 	return abilities
 }
 
+// GetAllGroupModels returns a map of group -> list of distinct enabled models
+func GetAllGroupModels() map[string][]string {
+	abilities := GetAllEnableAbilities()
+	groupModels := make(map[string][]string)
+	seen := make(map[string]map[string]bool)
+	for _, a := range abilities {
+		if seen[a.Group] == nil {
+			seen[a.Group] = make(map[string]bool)
+		}
+		if !seen[a.Group][a.Model] {
+			seen[a.Group][a.Model] = true
+			groupModels[a.Group] = append(groupModels[a.Group], a.Model)
+		}
+	}
+	return groupModels
+}
+
 func getPriority(group string, model string, retry int) (int, error) {
 
 	var priorities []int

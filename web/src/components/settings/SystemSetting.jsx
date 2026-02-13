@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import {
   Button,
   Form,
@@ -39,13 +39,16 @@ import {
   showError,
   showSuccess,
   toBoolean,
+  setStatusData,
 } from '../../helpers';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import CustomOAuthSetting from './CustomOAuthSetting';
+import { StatusContext } from '../../context/Status';
 
 const SystemSetting = () => {
   const { t } = useTranslation();
+  const [, statusDispatch] = useContext(StatusContext);
   let [inputs, setInputs] = useState({
     PasswordLoginEnabled: '',
     PasswordRegisterEnabled: '',
@@ -287,6 +290,16 @@ const SystemSetting = () => {
         newInputs[opt.key] = opt.value;
       });
       setInputs(newInputs);
+      // 刷新全局状态，使设置立即生效
+      try {
+        const statusRes = await API.get('/api/status');
+        if (statusRes.data.success) {
+          statusDispatch({ type: 'set', payload: statusRes.data.data });
+          setStatusData(statusRes.data.data);
+        }
+      } catch (e) {
+        // 忽略刷新失败，设置已保存成功
+      }
     } catch (error) {
       showError(t('更新失败'));
     }

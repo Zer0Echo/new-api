@@ -213,3 +213,23 @@ const (
 	TopUpStatusSuccess = "success"
 	TopUpStatusExpired = "expired"
 )
+
+const (
+	QuotaRecordStatusActive   = 1 // Active, has remaining balance
+	QuotaRecordStatusConsumed = 2 // Fully consumed via API usage
+	QuotaRecordStatusExpired  = 3 // Expired, remaining deducted from user.Quota
+)
+
+const (
+	TicketStatusOpen       = 1
+	TicketStatusInProgress = 2
+	TicketStatusResolved   = 3
+	TicketStatusClosed     = 4
+)
+
+const (
+	TicketPriorityLow      = 1
+	TicketPriorityMedium   = 2
+	TicketPriorityHigh     = 3
+	TicketPriorityCritical = 4
+)

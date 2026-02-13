@@ -81,16 +81,38 @@ func AddRedemption(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"success": false, "message": msg})
 		return
 	}
+	if redemption.PlanId > 0 {
+		// Subscription code: validate plan exists and is enabled
+		plan, err := model.GetSubscriptionPlanById(redemption.PlanId)
+		if err != nil || plan == nil {
+			common.ApiErrorI18n(c, i18n.MsgRedemptionPlanNotFound)
+			return
+		}
+		if !plan.Enabled {
+			common.ApiErrorI18n(c, i18n.MsgRedemptionPlanDisabled)
+			return
+		}
+		redemption.Quota = 0
+		redemption.ValidityPeriod = 0
+	} else {
+		// Balance code: existing validation
+		if redemption.ValidityPeriod < 0 {
+			common.ApiErrorI18n(c, i18n.MsgValidityPeriodNegative)
+			return
+		}
+	}
 	var keys []string
 	for i := 0; i < redemption.Count; i++ {
 		key := common.GetUUID()
 		cleanRedemption := model.Redemption{
-			UserId:      c.GetInt("id"),
-			Name:        redemption.Name,
-			Key:         key,
-			CreatedTime: common.GetTimestamp(),
-			Quota:       redemption.Quota,
-			ExpiredTime: redemption.ExpiredTime,
+			UserId:         c.GetInt("id"),
+			Name:           redemption.Name,
+			Key:            key,
+			CreatedTime:    common.GetTimestamp(),
+			Quota:          redemption.Quota,
+			ExpiredTime:    redemption.ExpiredTime,
+			ValidityPeriod: redemption.ValidityPeriod,
+			PlanId:         redemption.PlanId,
 		}
 		err = cleanRedemption.Insert()
 		if err != nil {
@@ -148,6 +170,8 @@ func UpdateRedemption(c *gin.Context) {
 		cleanRedemption.Name = redemption.Name
 		cleanRedemption.Quota = redemption.Quota
 		cleanRedemption.ExpiredTime = redemption.ExpiredTime
+		cleanRedemption.ValidityPeriod = redemption.ValidityPeriod
+		cleanRedemption.PlanId = redemption.PlanId
 	}
 	if statusOnly != "" {
 		cleanRedemption.Status = redemption.Status
@@ -177,6 +201,41 @@ func DeleteInvalidRedemption(c *gin.Context) {
 		"data":    rows,
 	})
 	return
+}
+
+type RedemptionBatch struct {
+	Ids    []int  `json:"ids"`
+	Action string `json:"action"` // "delete", "enable", "disable"
+}
+
+func BatchManageRedemption(c *gin.Context) {
+	batch := RedemptionBatch{}
+	if err := c.ShouldBindJSON(&batch); err != nil || len(batch.Ids) == 0 {
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
+	var count int64
+	var err error
+	switch batch.Action {
+	case "delete":
+		count, err = model.BatchDeleteRedemptions(batch.Ids)
+	case "enable":
+		count, err = model.BatchUpdateRedemptionStatus(batch.Ids, common.RedemptionCodeStatusEnabled)
+	case "disable":
+		count, err = model.BatchUpdateRedemptionStatus(batch.Ids, common.RedemptionCodeStatusDisabled)
+	default:
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data":    count,
+	})
 }
 
 func validateExpiredTime(c *gin.Context, expired int64) (bool, string) {

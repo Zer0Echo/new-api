@@ -1,0 +1,107 @@
+name: Build & Push Docker Image
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing git tag to rebuild (e.g. v1.0.0)"
+        required: true
+        type: string
+
+env:
+  IMAGE: haoyangchen/apimanage
+
+jobs:
+  build:
+    name: Build (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Resolve version
+        run: |
+          TAG="$(git describe --tags --exact-match 2>/dev/null)" || {
+            echo "ERROR: HEAD is not on a git tag. Aborting."
+            exit 1
+          }
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "$TAG" > VERSION
+          echo "Building $TAG for ${{ matrix.arch }}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ env.TAG }}-${{ matrix.arch }}
+            ${{ env.IMAGE }}:latest-${{ matrix.arch }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
+
+  manifest:
+    name: Create multi-arch manifest
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Resolve version
+        run: |
+          TAG="$(git describe --tags --exact-match)"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create manifest (version tag)
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.IMAGE }}:${TAG} \
+            ${{ env.IMAGE }}:${TAG}-amd64 \
+            ${{ env.IMAGE }}:${TAG}-arm64
+
+      - name: Create manifest (latest)
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.IMAGE }}:latest \
+            ${{ env.IMAGE }}:latest-amd64 \
+            ${{ env.IMAGE }}:latest-arm64

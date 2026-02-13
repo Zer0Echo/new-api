@@ -105,6 +105,10 @@ func SetApiRouter(router *gin.Engine) {
 				// Custom OAuth bindings
 				selfRoute.GET("/oauth/bindings", controller.GetUserOAuthBindings)
 				selfRoute.DELETE("/oauth/bindings/:provider_id", controller.UnbindCustomOAuth)
+
+				// Quota records (expiring balance)
+				selfRoute.GET("/self/quota_records", controller.GetSelfQuotaRecords)
+				selfRoute.GET("/self/quota_summary", controller.GetSelfQuotaSummary)
 			}
 
 			adminRoute := userRoute.Group("/")
@@ -265,6 +269,14 @@ func SetApiRouter(router *gin.Engine) {
 			redemptionRoute.PUT("/", controller.UpdateRedemption)
 			redemptionRoute.DELETE("/invalid", controller.DeleteInvalidRedemption)
 			redemptionRoute.DELETE("/:id", controller.DeleteRedemption)
+			redemptionRoute.POST("/batch", controller.BatchManageRedemption)
+		}
+		quotaRecordRoute := apiRouter.Group("/quota_record")
+		quotaRecordRoute.Use(middleware.AdminAuth())
+		{
+			quotaRecordRoute.GET("/user/:id", controller.GetUserQuotaRecords)
+			quotaRecordRoute.GET("/user/:id/summary", controller.GetUserQuotaSummary)
+			quotaRecordRoute.PUT("/:id", controller.UpdateQuotaRecord)
 		}
 		logRoute := apiRouter.Group("/log")
 		logRoute.GET("/", middleware.AdminAuth(), controller.GetAllLogs)
@@ -280,6 +292,11 @@ func SetApiRouter(router *gin.Engine) {
 		dataRoute.GET("/", middleware.AdminAuth(), controller.GetAllQuotaDates)
 		dataRoute.GET("/self", middleware.UserAuth(), controller.GetUserQuotaDates)
 
+		dashboardRoute := apiRouter.Group("/dashboard")
+		dashboardRoute.GET("/overview", middleware.AdminAuth(), controller.GetDashboardOverview)
+		dashboardRoute.GET("/overview/self", middleware.UserAuth(), controller.GetDashboardOverviewSelf)
+
+
 		logRoute.Use(middleware.CORS(), middleware.CriticalRateLimit())
 		{
 			logRoute.GET("/token", middleware.TokenAuthReadOnly(), controller.GetLogByKey)
@@ -288,6 +305,7 @@ func SetApiRouter(router *gin.Engine) {
 		groupRoute.Use(middleware.AdminAuth())
 		{
 			groupRoute.GET("/", controller.GetGroups)
+			groupRoute.GET("/preview", controller.GetGroupPreview)
 		}
 
 		prefillGroupRoute := apiRouter.Group("/prefill_group")
@@ -358,6 +376,36 @@ func SetApiRouter(router *gin.Engine) {
 			deploymentsRoute.PUT("/:id/name", controller.UpdateDeploymentName)
 			deploymentsRoute.POST("/:id/extend", controller.ExtendDeployment)
 			deploymentsRoute.DELETE("/:id", controller.DeleteDeployment)
+		}
+
+		proxyDetectRoute := apiRouter.Group("/proxy-detect")
+		proxyDetectRoute.Use(middleware.UserAuth(), middleware.CriticalRateLimit())
+		{
+			proxyDetectRoute.POST("/models", controller.ProxyDetectListModels)
+			proxyDetectRoute.POST("/detect", controller.ProxyDetect)
+		}
+
+		ticketRoute := apiRouter.Group("/ticket")
+		{
+			ticketUserRoute := ticketRoute.Group("/")
+			ticketUserRoute.Use(middleware.UserAuth())
+			{
+				ticketUserRoute.GET("/self", controller.GetSelfTickets)
+				ticketUserRoute.GET("/self/search", controller.SearchSelfTickets)
+				ticketUserRoute.POST("/", controller.CreateTicket)
+				ticketUserRoute.POST("/:id/close", controller.CloseTicket)
+				ticketUserRoute.GET("/:id/messages", controller.GetTicketMessages)
+				ticketUserRoute.POST("/:id/messages", controller.AddTicketMessage)
+			}
+			ticketAdminRoute := ticketRoute.Group("/")
+			ticketAdminRoute.Use(middleware.AdminAuth())
+			{
+				ticketAdminRoute.GET("/", controller.GetAllTickets)
+				ticketAdminRoute.GET("/search", controller.SearchTickets)
+				ticketAdminRoute.PUT("/", controller.UpdateTicket)
+				ticketAdminRoute.DELETE("/:id", controller.DeleteTicket)
+				ticketAdminRoute.POST("/admin/:id/messages", controller.AdminAddTicketMessage)
+			}
 		}
 	}
 }
