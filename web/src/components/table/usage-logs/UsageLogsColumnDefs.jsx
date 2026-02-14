@@ -641,10 +641,14 @@ export const getLogsColumns = ({
         const other = getLogOther(record.other);
         const isSubscription = other?.billing_source === 'subscription';
         if (isSubscription) {
-          // Subscription billed: show only tag (no $0), but keep tooltip for equivalent cost.
           return (
-            <Tooltip content={`${t('由订阅抵扣')}：${renderQuota(text, 6)}`}>
-              <span>{renderBillingTag(record, t)}</span>
+            <Tooltip content={t('由订阅抵扣')}>
+              <span>
+                {renderQuota(text, 6)}
+                <Tag color='green' size='small' style={{ marginLeft: 4 }}>
+                  {t('订阅')}
+                </Tag>
+              </span>
             </Tooltip>
           );
         }
