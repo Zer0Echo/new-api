@@ -43,6 +43,16 @@ const UsersFilters = ({
     }, 100);
   };
 
+  // Helper to trigger search with a specific field override
+  const triggerSearchWithOverride = (field, value) => {
+    const formValues = formApiRef.current ? formApiRef.current.getValues() : {};
+    const keyword = field === 'searchKeyword' ? (value || '') : (formValues.searchKeyword || '');
+    const group = field === 'searchGroup' ? (value || '') : (formValues.searchGroup || '');
+    const activity = field === 'searchActivity' ? (value || '') : (formValues.searchActivity || '');
+    const subscription = field === 'searchSubscription' ? (value || '') : (formValues.searchSubscription || '');
+    searchUsers(1, pageSize, keyword, group, activity, subscription);
+  };
+
   return (
     <Form
       initValues={formInitValues}
@@ -77,10 +87,7 @@ const UsersFilters = ({
             placeholder={t('选择分组')}
             optionList={groupOptions}
             onChange={(value) => {
-              // Group change triggers automatic search
-              setTimeout(() => {
-                searchUsers(1, pageSize);
-              }, 100);
+              triggerSearchWithOverride('searchGroup', value);
             }}
             className='w-full'
             showClear
@@ -100,10 +107,26 @@ const UsersFilters = ({
               { label: t('30天以上不活跃'), value: 'inactive_30d' },
               { label: t('从未活跃'), value: 'never' },
             ]}
-            onChange={() => {
-              setTimeout(() => {
-                searchUsers(1, pageSize);
-              }, 100);
+            onChange={(value) => {
+              triggerSearchWithOverride('searchActivity', value);
+            }}
+            className='w-full'
+            showClear
+            pure
+            size='small'
+          />
+        </div>
+        <div className='w-full md:w-48'>
+          <Form.Select
+            field='searchSubscription'
+            placeholder={t('订阅状态')}
+            optionList={[
+              { label: t('有活跃订阅'), value: 'has_active' },
+              { label: t('有订阅记录'), value: 'has_any' },
+              { label: t('无活跃订阅'), value: 'no_subscription' },
+            ]}
+            onChange={(value) => {
+              triggerSearchWithOverride('searchSubscription', value);
             }}
             className='w-full'
             showClear

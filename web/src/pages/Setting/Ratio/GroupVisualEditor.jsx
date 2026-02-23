@@ -144,6 +144,7 @@ export default function GroupVisualEditor(props) {
         });
       }
     }
+    rows.sort((a, b) => a.userGroup.localeCompare(b.userGroup) || a.targetGroup.localeCompare(b.targetGroup));
     return rows;
   }, [groupGroupRatio]);
 
@@ -171,6 +172,7 @@ export default function GroupVisualEditor(props) {
         });
       }
     }
+    rows.sort((a, b) => a.userGroup.localeCompare(b.userGroup) || a.targetGroup.localeCompare(b.targetGroup));
     return rows;
   }, [groupSpecialUsableGroup]);
 
@@ -378,11 +380,20 @@ export default function GroupVisualEditor(props) {
     setGroupSpecialUsableGroup((prev) => {
       const next = { ...prev };
       if (!next[userGroup]) next[userGroup] = {};
-      // Avoid duplicate key
-      let key = 'new_group';
-      let i = 1;
-      while (next[userGroup][key] || next[userGroup][`+:${key}`] || next[userGroup][`-:${key}`]) {
-        key = `new_group_${i++}`;
+      // Pick the first available group name that doesn't conflict
+      let key = '';
+      for (const g of groupNames) {
+        if (!next[userGroup][g] && !next[userGroup][`+:${g}`] && !next[userGroup][`-:${g}`]) {
+          key = g;
+          break;
+        }
+      }
+      if (!key) {
+        key = 'new_group';
+        let i = 1;
+        while (next[userGroup][key] || next[userGroup][`+:${key}`] || next[userGroup][`-:${key}`]) {
+          key = `new_group_${i++}`;
+        }
       }
       next[userGroup] = { ...next[userGroup], [key]: key };
       return next;
@@ -758,7 +769,7 @@ export default function GroupVisualEditor(props) {
       dataIndex: 'targetGroup',
       width: 130,
       render: (_, record) => (
-        <Input
+        <Select
           size="small"
           value={record.targetGroup}
           onChange={(v) =>
@@ -772,7 +783,13 @@ export default function GroupVisualEditor(props) {
             )
           }
           style={{ width: '100%' }}
-        />
+        >
+          {groupNames.map((g) => (
+            <Select.Option key={g} value={g}>
+              {g}
+            </Select.Option>
+          ))}
+        </Select>
       ),
     },
     {

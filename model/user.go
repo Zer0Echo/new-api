@@ -223,7 +223,7 @@ func GetAllUsers(pageInfo *common.PageInfo) (users []*User, total int64, err err
 	return users, total, nil
 }
 
-func SearchUsers(keyword string, group string, activityFilter string, startIdx int, num int) ([]*User, int64, error) {
+func SearchUsers(keyword string, group string, activityFilter string, subscriptionFilter string, startIdx int, num int) ([]*User, int64, error) {
 	var users []*User
 	var total int64
 	var err error
@@ -283,6 +283,22 @@ func SearchUsers(keyword string, group string, activityFilter string, startIdx i
 		query = query.Where("last_active_time < ? OR last_active_time = 0", now-30*86400)
 	case "never":
 		query = query.Where("last_active_time = 0")
+	}
+
+	// 订阅筛选
+	userTable := "`users`"
+	subTable := "`user_subscriptions`"
+	if common.UsingPostgreSQL {
+		userTable = `"users"`
+		subTable = `"user_subscriptions"`
+	}
+	switch subscriptionFilter {
+	case "has_active":
+		query = query.Where(userTable+".id IN (SELECT user_id FROM "+subTable+" WHERE status = ? AND end_time > ?)", "active", now)
+	case "has_any":
+		query = query.Where(userTable+".id IN (SELECT user_id FROM "+subTable+")")
+	case "no_subscription":
+		query = query.Where(userTable+".id NOT IN (SELECT user_id FROM "+subTable+" WHERE status = ? AND end_time > ?)", "active", now)
 	}
 
 	// 获取总数
