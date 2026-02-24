@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import {
   Table,
   Button,
@@ -38,6 +38,61 @@ import {
 import { useTranslation } from 'react-i18next';
 
 const { Text, Title } = Typography;
+
+// IME-safe Input component: buffers input locally, only commits on blur or when IME composition ends
+function DeferredInput({ value, onChange, ...rest }) {
+  const [localValue, setLocalValue] = useState(value ?? '');
+  const composingRef = useRef(false);
+
+  // Sync from parent when value changes externally
+  useEffect(() => {
+    if (!composingRef.current) {
+      setLocalValue(value ?? '');
+    }
+  }, [value]);
+
+  const handleChange = useCallback(
+    (v) => {
+      setLocalValue(v);
+      // If not composing (i.e. non-IME input), commit immediately
+      if (!composingRef.current) {
+        onChange?.(v);
+      }
+    },
+    [onChange],
+  );
+
+  const handleCompositionStart = useCallback(() => {
+    composingRef.current = true;
+  }, []);
+
+  const handleCompositionEnd = useCallback(
+    (e) => {
+      composingRef.current = false;
+      // After composition ends, commit the final value
+      const finalValue = e.target.value;
+      setLocalValue(finalValue);
+      onChange?.(finalValue);
+    },
+    [onChange],
+  );
+
+  const handleBlur = useCallback(() => {
+    composingRef.current = false;
+    onChange?.(localValue);
+  }, [onChange, localValue]);
+
+  return (
+    <Input
+      {...rest}
+      value={localValue}
+      onChange={handleChange}
+      onCompositionStart={handleCompositionStart}
+      onCompositionEnd={handleCompositionEnd}
+      onBlur={handleBlur}
+    />
+  );
+}
 
 export default function GroupVisualEditor(props) {
   const { t } = useTranslation();
@@ -116,8 +171,8 @@ export default function GroupVisualEditor(props) {
     fetchPreview();
   }, []);
 
-  // All group names from GroupRatio
-  const groupNames = useMemo(() => Object.keys(groupRatio).sort(), [groupRatio]);
+  // All group names from GroupRatio — keep insertion order, only sort on save
+  const groupNames = useMemo(() => Object.keys(groupRatio), [groupRatio]);
 
   // Table data for Section A
   const groupTableData = useMemo(() => {
@@ -176,13 +231,38 @@ export default function GroupVisualEditor(props) {
     return rows;
   }, [groupSpecialUsableGroup]);
 
-  // Convert state back to JSON strings for save
+  // Sort object keys for normalized output
+  const sortObjectKeys = (obj) => {
+    const sorted = {};
+    for (const key of Object.keys(obj).sort()) {
+      sorted[key] = obj[key];
+    }
+    return sorted;
+  };
+
+  // Convert state back to JSON strings for save (keys sorted for consistency)
   const buildInputs = () => ({
-    GroupRatio: JSON.stringify(groupRatio, null, 2),
-    UserUsableGroups: JSON.stringify(userUsableGroups, null, 2),
-    GroupGroupRatio: JSON.stringify(groupGroupRatio, null, 2),
+    GroupRatio: JSON.stringify(sortObjectKeys(groupRatio), null, 2),
+    UserUsableGroups: JSON.stringify(sortObjectKeys(userUsableGroups), null, 2),
+    GroupGroupRatio: JSON.stringify(
+      sortObjectKeys(
+        Object.fromEntries(
+          Object.entries(groupGroupRatio)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([k, v]) => [k, sortObjectKeys(v)]),
+        ),
+      ),
+      null,
+      2,
+    ),
     'group_ratio_setting.group_special_usable_group': JSON.stringify(
-      groupSpecialUsableGroup,
+      sortObjectKeys(
+        Object.fromEntries(
+          Object.entries(groupSpecialUsableGroup)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([k, v]) => [k, sortObjectKeys(v)]),
+        ),
+      ),
       null,
       2,
     ),
@@ -550,7 +630,7 @@ export default function GroupVisualEditor(props) {
       width: 150,
       render: (_, record) =>
         record.isUsable ? (
-          <Input
+          <DeferredInput
             size="small"
             value={record.description}
             onChange={(v) => updateUsableDescription(record.name, v)}
@@ -797,7 +877,7 @@ export default function GroupVisualEditor(props) {
       dataIndex: 'description',
       width: 130,
       render: (_, record) => (
-        <Input
+        <DeferredInput
           size="small"
           value={record.description}
           onChange={(v) =>

@@ -56,6 +56,12 @@ type DashboardOverview struct {
 	UserRequestDist  []DistItem `json:"user_request_dist"`
 	TopModels        []DistItem `json:"top_models"`
 	TopUsers         []DistItem `json:"top_users"`
+
+	// Row 6: Subscription stats (admin only)
+	SubscriptionTotalPlans    int64   `json:"subscription_total_plans"`
+	SubscriptionActiveSubs    int64   `json:"subscription_active_subs"`
+	SubscriptionMonthRevenue  float64 `json:"subscription_month_revenue"`
+	SubscriptionExpiringSoon  int64   `json:"subscription_expiring_soon"` // within 7 days
 }
 
 type PeriodSummary struct {
@@ -124,6 +130,45 @@ func DashboardCountActiveSubscriptionUsers() (int64, error) {
 	err := DB.Model(&UserSubscription{}).
 		Where("status = ? AND end_time > ?", "active", now).
 		Distinct("user_id").
+		Count(&total).Error
+	return total, err
+}
+
+func DashboardCountTotalPlans() (int64, error) {
+	var total int64
+	err := DB.Model(&SubscriptionPlan{}).Where("enabled = ?", true).Count(&total).Error
+	return total, err
+}
+
+func DashboardCountActiveSubscriptions() (int64, error) {
+	var total int64
+	now := time.Now().Unix()
+	err := DB.Model(&UserSubscription{}).
+		Where("status = ? AND end_time > ?", "active", now).
+		Count(&total).Error
+	return total, err
+}
+
+func DashboardSubscriptionMonthRevenue() (float64, error) {
+	now := time.Now()
+	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).Unix()
+	var result struct{ Total *float64 }
+	err := DB.Model(&SubscriptionOrder{}).
+		Where("status = ? AND complete_time >= ?", common.TopUpStatusSuccess, monthStart).
+		Select("COALESCE(SUM(money), 0) as total").
+		Scan(&result).Error
+	if result.Total == nil {
+		return 0, err
+	}
+	return *result.Total, err
+}
+
+func DashboardCountExpiringSoonSubscriptions(withinDays int) (int64, error) {
+	var total int64
+	now := time.Now().Unix()
+	threshold := now + int64(withinDays*24*3600)
+	err := DB.Model(&UserSubscription{}).
+		Where("status = ? AND end_time > ? AND end_time <= ?", "active", now, threshold).
 		Count(&total).Error
 	return total, err
 }
@@ -480,6 +525,12 @@ func GetDashboardOverviewAdmin(startTs, endTs int64) (*DashboardOverview, error)
 	o.TotalTopUp, _ = DashboardSumTopUpMoney(0, 0)
 	o.TotalConsumed, _ = DashboardSumAllUserUsedQuota()
 	o.EstimatedProfit = o.TotalTopUp - float64(o.TotalConsumed)/common.QuotaPerUnit
+
+	// Row 6: Subscription stats (admin only)
+	o.SubscriptionTotalPlans, _ = DashboardCountTotalPlans()
+	o.SubscriptionActiveSubs, _ = DashboardCountActiveSubscriptions()
+	o.SubscriptionMonthRevenue, _ = DashboardSubscriptionMonthRevenue()
+	o.SubscriptionExpiringSoon, _ = DashboardCountExpiringSoonSubscriptions(7)
 
 	// Row 2 (filtered by time range)
 	o.TotalTokens, _ = DashboardSumTokens(perfStart, perfEnd, 0)

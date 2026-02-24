@@ -1205,6 +1205,307 @@ func GetSubscriptionPlanInfoByUserSubscriptionId(userSubscriptionId int) (*Subsc
 	return info, nil
 }
 
+// ---- Admin: Subscription Order List (paginated, filterable) ----
+
+type SubscriptionOrderListItem struct {
+	Id            int     `json:"id"`
+	UserId        int     `json:"user_id"`
+	Username      string  `json:"username"`
+	PlanId        int     `json:"plan_id"`
+	PlanTitle     string  `json:"plan_title"`
+	Money         float64 `json:"money"`
+	TradeNo       string  `json:"trade_no"`
+	PaymentMethod string  `json:"payment_method"`
+	Status        string  `json:"status"`
+	CreateTime    int64   `json:"create_time"`
+	CompleteTime  int64   `json:"complete_time"`
+}
+
+func AdminListSubscriptionOrders(offset, limit int, userId int, status string, startTs, endTs int64) ([]SubscriptionOrderListItem, int64, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	tx := DB.Model(&SubscriptionOrder{})
+	if userId > 0 {
+		tx = tx.Where("user_id = ?", userId)
+	}
+	if status != "" {
+		tx = tx.Where("status = ?", status)
+	}
+	if startTs > 0 {
+		tx = tx.Where("create_time >= ?", startTs)
+	}
+	if endTs > 0 {
+		tx = tx.Where("create_time <= ?", endTs)
+	}
+	var total int64
+	if err := tx.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var orders []SubscriptionOrder
+	if err := tx.Order("id desc").Offset(offset).Limit(limit).Find(&orders).Error; err != nil {
+		return nil, 0, err
+	}
+	if len(orders) == 0 {
+		return []SubscriptionOrderListItem{}, total, nil
+	}
+	// Batch fetch usernames and plan titles
+	userIdSet := make(map[int]struct{}, len(orders))
+	planIdSet := make(map[int]struct{}, len(orders))
+	for _, o := range orders {
+		userIdSet[o.UserId] = struct{}{}
+		planIdSet[o.PlanId] = struct{}{}
+	}
+	userIds := make([]int, 0, len(userIdSet))
+	for uid := range userIdSet {
+		userIds = append(userIds, uid)
+	}
+	planIds := make([]int, 0, len(planIdSet))
+	for pid := range planIdSet {
+		planIds = append(planIds, pid)
+	}
+	usernameMap := make(map[int]string)
+	if len(userIds) > 0 {
+		var users []User
+		DB.Where("id IN ?", userIds).Select("id", "username").Find(&users)
+		for _, u := range users {
+			usernameMap[u.Id] = u.Username
+		}
+	}
+	titleMap, _ := GetSubscriptionPlanTitlesByIds(planIds)
+	result := make([]SubscriptionOrderListItem, 0, len(orders))
+	for _, o := range orders {
+		result = append(result, SubscriptionOrderListItem{
+			Id:            o.Id,
+			UserId:        o.UserId,
+			Username:      usernameMap[o.UserId],
+			PlanId:        o.PlanId,
+			PlanTitle:     titleMap[o.PlanId],
+			Money:         o.Money,
+			TradeNo:       o.TradeNo,
+			PaymentMethod: o.PaymentMethod,
+			Status:        o.Status,
+			CreateTime:    o.CreateTime,
+			CompleteTime:  o.CompleteTime,
+		})
+	}
+	return result, total, nil
+}
+
+// ---- Admin: Delete Subscription Plan (safe, check active subscriptions) ----
+
+func AdminDeleteSubscriptionPlan(planId int) error {
+	if planId <= 0 {
+		return errors.New("invalid planId")
+	}
+	// Check for active subscriptions
+	now := common.GetTimestamp()
+	var activeCount int64
+	if err := DB.Model(&UserSubscription{}).
+		Where("plan_id = ? AND status = ? AND end_time > ?", planId, "active", now).
+		Count(&activeCount).Error; err != nil {
+		return err
+	}
+	if activeCount > 0 {
+		return fmt.Errorf("该套餐仍有 %d 个活跃订阅，无法删除", activeCount)
+	}
+	if err := DB.Where("id = ?", planId).Delete(&SubscriptionPlan{}).Error; err != nil {
+		return err
+	}
+	InvalidateSubscriptionPlanCache(planId)
+	return nil
+}
+
+// ---- Renew Subscription (extend EndTime) ----
+
+func RenewUserSubscription(userSubscriptionId int) (string, error) {
+	if userSubscriptionId <= 0 {
+		return "", errors.New("invalid userSubscriptionId")
+	}
+	var msg string
+	var cacheUserId int
+	var cacheGroup string
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		var sub UserSubscription
+		if err := tx.Set("gorm:query_option", "FOR UPDATE").
+			Where("id = ?", userSubscriptionId).First(&sub).Error; err != nil {
+			return err
+		}
+		if sub.Status != "active" && sub.Status != "expired" {
+			return errors.New("只能续订状态为 active 或 expired 的订阅")
+		}
+		plan, err := getSubscriptionPlanByIdTx(tx, sub.PlanId)
+		if err != nil {
+			return fmt.Errorf("获取套餐失败: %w", err)
+		}
+		// Calculate new end time based on current end time (or now if expired)
+		base := time.Unix(sub.EndTime, 0)
+		now := time.Now()
+		if base.Before(now) {
+			base = now
+		}
+		newEnd, err := calcPlanEndTime(base, plan)
+		if err != nil {
+			return fmt.Errorf("计算到期时间失败: %w", err)
+		}
+		updates := map[string]interface{}{
+			"end_time":   newEnd,
+			"status":     "active",
+			"updated_at": common.GetTimestamp(),
+		}
+		// Recalculate next reset time if applicable
+		period := NormalizeResetPeriod(plan.QuotaResetPeriod)
+		if period != SubscriptionResetNever {
+			resetBase := base
+			nextReset := calcNextResetTime(resetBase, plan, newEnd)
+			updates["next_reset_time"] = nextReset
+			if sub.LastResetTime == 0 {
+				updates["last_reset_time"] = base.Unix()
+			}
+		}
+		// Save original status before Updates overwrites the struct
+		wasExpired := sub.Status == "expired"
+		if err := tx.Model(&sub).Updates(updates).Error; err != nil {
+			return err
+		}
+		// If was expired and has upgrade group, re-upgrade user
+		if wasExpired && strings.TrimSpace(sub.UpgradeGroup) != "" {
+			currentGroup, err := getUserGroupByIdTx(tx, sub.UserId)
+			if err != nil {
+				return err
+			}
+			if currentGroup != sub.UpgradeGroup {
+				if err := tx.Model(&User{}).Where("id = ?", sub.UserId).
+					Update("group", sub.UpgradeGroup).Error; err != nil {
+					return err
+				}
+				cacheUserId = sub.UserId
+				cacheGroup = sub.UpgradeGroup
+				msg = fmt.Sprintf("用户分组将升级到 %s", sub.UpgradeGroup)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	if cacheGroup != "" && cacheUserId > 0 {
+		_ = UpdateUserGroupCache(cacheUserId, cacheGroup)
+	}
+	return msg, nil
+}
+
+// ---- Subscription Usage Statistics ----
+
+type SubscriptionPlanUsageStat struct {
+	PlanId         int     `json:"plan_id"`
+	PlanTitle      string  `json:"plan_title"`
+	ActiveCount    int64   `json:"active_count"`
+	TotalCount     int64   `json:"total_count"`
+	TotalQuota     int64   `json:"total_quota"`
+	UsedQuota      int64   `json:"used_quota"`
+	TotalRevenue   float64 `json:"total_revenue"`
+	ExpiringCount  int64   `json:"expiring_count"` // expiring within 7 days
+}
+
+func GetSubscriptionPlanUsageStats() ([]SubscriptionPlanUsageStat, error) {
+	now := common.GetTimestamp()
+	expiringThreshold := now + 7*24*3600
+
+	var plans []SubscriptionPlan
+	if err := DB.Order("sort_order desc, id desc").Find(&plans).Error; err != nil {
+		return nil, err
+	}
+	if len(plans) == 0 {
+		return []SubscriptionPlanUsageStat{}, nil
+	}
+
+	type aggRow struct {
+		PlanId      int   `gorm:"column:plan_id"`
+		Status      string `gorm:"column:status"`
+		Cnt         int64 `gorm:"column:cnt"`
+		SumTotal    int64 `gorm:"column:sum_total"`
+		SumUsed     int64 `gorm:"column:sum_used"`
+	}
+	var aggRows []aggRow
+	DB.Model(&UserSubscription{}).
+		Select("plan_id, status, COUNT(*) as cnt, COALESCE(SUM(amount_total), 0) as sum_total, COALESCE(SUM(amount_used), 0) as sum_used").
+		Group("plan_id, status").
+		Find(&aggRows)
+
+	type expiringRow struct {
+		PlanId int   `gorm:"column:plan_id"`
+		Cnt    int64 `gorm:"column:cnt"`
+	}
+	var expiringRows []expiringRow
+	DB.Model(&UserSubscription{}).
+		Select("plan_id, COUNT(*) as cnt").
+		Where("status = ? AND end_time > ? AND end_time <= ?", "active", now, expiringThreshold).
+		Group("plan_id").
+		Find(&expiringRows)
+	expiringMap := make(map[int]int64, len(expiringRows))
+	for _, r := range expiringRows {
+		expiringMap[r.PlanId] = r.Cnt
+	}
+
+	// Revenue from completed orders
+	type revenueRow struct {
+		PlanId   int     `gorm:"column:plan_id"`
+		Revenue  float64 `gorm:"column:revenue"`
+	}
+	var revenueRows []revenueRow
+	DB.Model(&SubscriptionOrder{}).
+		Select("plan_id, COALESCE(SUM(money), 0) as revenue").
+		Where("status = ?", common.TopUpStatusSuccess).
+		Group("plan_id").
+		Find(&revenueRows)
+	revenueMap := make(map[int]float64, len(revenueRows))
+	for _, r := range revenueRows {
+		revenueMap[r.PlanId] = r.Revenue
+	}
+
+	// Build per-plan stats
+	type planAgg struct {
+		ActiveCount int64
+		TotalCount  int64
+		TotalQuota  int64
+		UsedQuota   int64
+	}
+	planAggMap := make(map[int]*planAgg)
+	for _, r := range aggRows {
+		pa, ok := planAggMap[r.PlanId]
+		if !ok {
+			pa = &planAgg{}
+			planAggMap[r.PlanId] = pa
+		}
+		pa.TotalCount += r.Cnt
+		if r.Status == "active" {
+			pa.ActiveCount += r.Cnt
+			pa.TotalQuota += r.SumTotal
+			pa.UsedQuota += r.SumUsed
+		}
+	}
+
+	result := make([]SubscriptionPlanUsageStat, 0, len(plans))
+	for _, p := range plans {
+		pa := planAggMap[p.Id]
+		stat := SubscriptionPlanUsageStat{
+			PlanId:        p.Id,
+			PlanTitle:     p.Title,
+			TotalRevenue:  revenueMap[p.Id],
+			ExpiringCount: expiringMap[p.Id],
+		}
+		if pa != nil {
+			stat.ActiveCount = pa.ActiveCount
+			stat.TotalCount = pa.TotalCount
+			stat.TotalQuota = pa.TotalQuota
+			stat.UsedQuota = pa.UsedQuota
+		}
+		result = append(result, stat)
+	}
+	return result, nil
+}
+
 // Update subscription used amount by delta (positive consume more, negative refund).
 func PostConsumeUserSubscriptionDelta(userSubscriptionId int, delta int64) error {
 	if userSubscriptionId <= 0 {
