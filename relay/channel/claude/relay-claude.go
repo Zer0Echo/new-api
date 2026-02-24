@@ -274,8 +274,9 @@ func RequestOpenAI2ClaudeMessage(c *gin.Context, textRequest dto.GeneralOpenAIRe
 				for _, ctx := range message.ParseContent() {
 					if ctx.Type == "text" {
 						systemMessages = append(systemMessages, dto.ClaudeMediaMessage{
-							Type: "text",
-							Text: common.GetPointer[string](ctx.Text),
+							Type:         "text",
+							Text:         common.GetPointer[string](ctx.Text),
+							CacheControl: ctx.CacheControl,
 						})
 					}
 					// 未来可以在这里扩展对图片等其他类型的支持
@@ -330,12 +331,35 @@ func RequestOpenAI2ClaudeMessage(c *gin.Context, textRequest dto.GeneralOpenAIRe
 					}
 				}
 			} else if message.IsStringContent() && message.ToolCalls == nil {
-				claudeMessage.Content = message.StringContent()
+				// 检查原始内容中是否包含 cache_control（用户通过数组格式发送纯文本+缓存控制）
+				parsedContent := message.ParseContent()
+				hasCacheControl := false
+				for _, mc := range parsedContent {
+					if len(mc.CacheControl) > 0 {
+						hasCacheControl = true
+						break
+					}
+				}
+				if hasCacheControl && len(parsedContent) > 0 {
+					// 升级为数组格式以保留 cache_control
+					claudeMediaMessages := make([]dto.ClaudeMediaMessage, 0, len(parsedContent))
+					for _, mc := range parsedContent {
+						claudeMediaMessages = append(claudeMediaMessages, dto.ClaudeMediaMessage{
+							Type:         "text",
+							Text:         common.GetPointer[string](mc.Text),
+							CacheControl: mc.CacheControl,
+						})
+					}
+					claudeMessage.Content = claudeMediaMessages
+				} else {
+					claudeMessage.Content = message.StringContent()
+				}
 			} else {
 				claudeMediaMessages := make([]dto.ClaudeMediaMessage, 0)
 				for _, mediaMessage := range message.ParseContent() {
 					claudeMediaMessage := dto.ClaudeMediaMessage{
-						Type: mediaMessage.Type,
+						Type:         mediaMessage.Type,
+						CacheControl: mediaMessage.CacheControl,
 					}
 					if mediaMessage.Type == "text" {
 						claudeMediaMessage.Text = common.GetPointer[string](mediaMessage.Text)
